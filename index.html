@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C.H.S Gami Asters - Facilities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <img id="ga-logo" class="ga-logo" src="images/ga-logo.png" alt="Gami Asters logo" />
+      <div class="hero-text">
+        <h1>Gami Asters, C.H.S</h1>
+        <p>Facility Information Portal</p>
+        <small id="updatedAt">Loading latest update...</small>
+      </div>
+    </header>
+
+    <section class="notice-banner" role="note" aria-label="Work in progress notice">
+      This portal is currently under development. Information displayed here is sample content for demonstration only.
+    </section>
+
+    <section class="toolbar">
+      <input id="searchBox" type="search" placeholder="Search facility, coordinator, instructor..." aria-label="Search facilities" />
+      <button id="searchBtn" type="button">Search</button>
+      <button id="refreshBtn" type="button">Refresh</button>
+    </section>
+
+    <section class="home-sections" id="homeSections">
+      <article class="home-card">
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-facility">
+          <h2>Facility Info</h2>
+          <span class="chevron" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="home-card-body hidden" id="home-body-facility">
+          <section id="status" class="status" role="status" aria-live="polite"></section>
+
+          <section id="facilityList" class="grid"></section>
+        </div>
+      </article>
+      
+      <article class="home-card">
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-society">
+          <h2>Know Your Society</h2>
+          <span class="chevron" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="home-card-body hidden" id="home-body-society">
+          <p class="home-card-intro">List of committee members (in file order):</p>
+          <ul class="info-list" id="societyList"></ul>
+        </div>
+      </article>
+
+      <article class="home-card">
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-contacts">
+          <h2>Important Contacts</h2>
+          <span class="chevron" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="home-card-body hidden" id="home-body-contacts">
+          <p class="home-card-intro">Nearby emergency contacts:</p>
+          <ul class="info-list" id="contactsList"></ul>
+        </div>
+      </article>
+
+      <article class="home-card">
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-operations-contacts">
+          <h2>Society Operations Contacts</h2>
+          <span class="chevron" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="home-card-body hidden" id="home-body-operations-contacts">
+          <p class="home-card-intro">Daily operations team and escalation matrix:</p>
+          <ul class="info-list ops-list" id="operationsContactsList"></ul>
+        </div>
+      </article>
+
+    </section>
+  </main>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <button class="card-toggle" type="button" aria-expanded="false">
+        <h2 class="facility-name"></h2>
+        <span class="chevron" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="card-body hidden">
+        <p><strong>Timings:</strong> <span class="timings"></span></p>
+        <div class="list-row rules-row">
+          <strong>Rules & Regulations:</strong>
+          <ol class="rules-list"></ol>
+        </div>
+        <p class="booking-row"><strong>Booking Process:</strong> <span class="booking"></span></p>
+        <p class="instructor-row"><strong>Instructor Details:</strong> <span class="instructor"></span></p>
+        <p><strong>Coordinator:</strong> <span class="coordinator"></span></p>
+        <p class="contact-row"><strong>Contact:</strong> <span class="contact"></span></p>
+        <div class="list-row notes-row">
+          <strong>Notes:</strong>
+          <ol class="notes-list"></ol>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
