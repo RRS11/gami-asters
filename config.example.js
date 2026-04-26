@@ -3,10 +3,7 @@ window.APP_CONFIG = {
   dataSources: {
     facilitiesCsvUrl: "./data/facilities.csv",
     societyCsvUrl: "./data/society.csv",
-    contactsCsvUrl: "./data/contacts.csv",
+    emergencyContactsCsvUrl: "./data/emergency_contacts.csv",
     operationsContactsCsvUrl: "./data/society_operations_contacts.csv"
   }
-
-  // Optional legacy fallback (facilities only):
-  // sheetCsvUrl: "PASTE_YOUR_PUBLISHED_GOOGLE_SHEET_CSV_URL_HERE"
 };
