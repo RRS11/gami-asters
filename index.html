@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>C.H.S Gami Asters - Facilities</title>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="images/ga-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -55,13 +57,13 @@
       </article>
 
       <article class="home-card">
-        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-contacts">
-          <h2>Important Contacts</h2>
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-emergency-contacts">
+          <h2>Emergency Contacts</h2>
           <span class="chevron" aria-hidden="true">&#9662;</span>
         </button>
-        <div class="home-card-body hidden" id="home-body-contacts">
+        <div class="home-card-body hidden" id="home-body-emergency-contacts">
           <p class="home-card-intro">Nearby emergency contacts:</p>
-          <ul class="info-list" id="contactsList"></ul>
+          <ul class="info-list" id="emergencyContactsList"></ul>
         </div>
       </article>
 
@@ -77,6 +79,12 @@
       </article>
 
     </section>
+
+    <footer class="site-footer">
+      <p>This portal helps Gami Asters CHS members find society and facility information in one place.</p>
+      <p>The details and rules shown here are meant for convenience and general guidance only, and should not be considered official/legal binding.</p>
+      <p>If anything is unclear, please reach out to the society office for confirmation.</p>
+    </footer>
   </main>
 
   <template id="cardTemplate">

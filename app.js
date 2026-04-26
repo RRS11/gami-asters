@@ -22,14 +22,14 @@ const state = {
   facilities: [],
   filtered: [],
   societyMembers: [],
-  importantContacts: [],
+  emergencyContacts: [],
   operationsContacts: []
 };
 
 const statusEl = document.getElementById("status");
 const listEl = document.getElementById("facilityList");
 const societyListEl = document.getElementById("societyList");
-const contactsListEl = document.getElementById("contactsList");
+const emergencyContactsListEl = document.getElementById("emergencyContactsList");
 const operationsContactsListEl = document.getElementById("operationsContactsList");
 const template = document.getElementById("cardTemplate");
 const searchBox = document.getElementById("searchBox");
@@ -40,6 +40,7 @@ const homeSections = document.getElementById("homeSections");
 const facilityHomeCard = document
   .querySelector('[aria-controls="home-body-facility"]')
   ?.closest(".home-card");
+const PHONE_PATTERN = /(?:\+91[\s-]?\d{5}\s?\d{5}|\b[6-9]\d{9}\b)/g;
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
@@ -176,12 +177,9 @@ function normalizeKey(key) {
   return key.replace(/^\uFEFF/, "").trim().toLowerCase().replace(/\s+/g, "_");
 }
 
-function getDataSourceUrl(configKey, legacyKey) {
+function getDataSourceUrl(configKey) {
   if (window.APP_CONFIG?.dataSources?.[configKey]) {
     return window.APP_CONFIG.dataSources[configKey];
-  }
-  if (legacyKey && window.APP_CONFIG?.[legacyKey]) {
-    return window.APP_CONFIG[legacyKey];
   }
   return "";
 }
@@ -343,6 +341,78 @@ function isTruthyFlag(value) {
   return ["true", "1", "yes", "y"].includes(value.trim().toLowerCase());
 }
 
+function getTelHref(value) {
+  const formatted = formatIndianMobile(value);
+  if (formatted) {
+    return `tel:${formatted.replace("-", "")}`;
+  }
+
+  return "";
+}
+
+function isPhoneMatch(value) {
+  return Boolean(formatIndianMobile(value));
+}
+
+function formatIndianMobile(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return `+91-${digits.slice(2)}`;
+  }
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return `+91-${digits}`;
+  }
+  return "";
+}
+
+function createPhoneLink(value) {
+  const formatted = formatIndianMobile(value);
+  const link = document.createElement("a");
+  link.className = "phone-link";
+  link.href = getTelHref(value);
+  link.textContent = formatted || value;
+  link.setAttribute("aria-label", `Call ${formatted || value}`);
+  return link;
+}
+
+function appendTextWithPhoneLinks(parent, value, fallbackText = "N/A") {
+  const text = value || fallbackText;
+  if (!text) {
+    parent.append(fallbackText);
+    return;
+  }
+
+  let lastIndex = 0;
+  const matches = String(text).matchAll(PHONE_PATTERN);
+
+  for (const match of matches) {
+    const phoneText = match[0];
+    if (!isPhoneMatch(phoneText)) {
+      continue;
+    }
+
+    if (match.index > lastIndex) {
+      parent.append(String(text).slice(lastIndex, match.index));
+    }
+    parent.appendChild(createPhoneLink(phoneText));
+    lastIndex = match.index + phoneText.length;
+  }
+
+  if (lastIndex === 0) {
+    parent.append(text);
+    return;
+  }
+
+  if (lastIndex < String(text).length) {
+    parent.append(String(text).slice(lastIndex));
+  }
+}
+
+function setTextWithPhoneLinks(element, value, fallbackText = "N/A") {
+  element.innerHTML = "";
+  appendTextWithPhoneLinks(element, value, fallbackText);
+}
+
 function renderNumberedList(listEl, rawValue, fallbackText = "N/A") {
   listEl.innerHTML = "";
   const points = splitIntoPoints(rawValue);
@@ -350,7 +420,7 @@ function renderNumberedList(listEl, rawValue, fallbackText = "N/A") {
 
   finalPoints.forEach((point) => {
     const li = document.createElement("li");
-    li.textContent = point;
+    appendTextWithPhoneLinks(li, point);
     listEl.appendChild(li);
   });
 }
@@ -364,13 +434,13 @@ function createCard(item, idx) {
   toggleBtn.setAttribute("aria-controls", bodyId);
   body.id = bodyId;
 
-  card.querySelector(".facility-name").textContent = item.facility || "N/A";
+  setTextWithPhoneLinks(card.querySelector(".facility-name"), item.facility);
   renderNumberedList(card.querySelector(".rules-list"), item.rules_and_regulations, "N/A");
-  card.querySelector(".timings").textContent = item.timings || "N/A";
-  card.querySelector(".booking").textContent = item.booking_process || "Not applicable";
-  card.querySelector(".instructor").textContent = item.instructor_details || "N/A";
-  card.querySelector(".coordinator").textContent = item.coordinator_name || "N/A";
-  card.querySelector(".contact").textContent = item.contact || "N/A";
+  setTextWithPhoneLinks(card.querySelector(".timings"), item.timings);
+  setTextWithPhoneLinks(card.querySelector(".booking"), item.booking_process, "Not applicable");
+  setTextWithPhoneLinks(card.querySelector(".instructor"), item.instructor_details);
+  setTextWithPhoneLinks(card.querySelector(".coordinator"), item.coordinator_name);
+  setTextWithPhoneLinks(card.querySelector(".contact"), item.contact);
   renderNumberedList(card.querySelector(".notes-list"), item.notes, "N/A");
 
   if (!item.booking_process) {
@@ -414,8 +484,12 @@ function renderSociety(list) {
     if (isTruthyFlag(member.imp)) {
       li.classList.add("important-item");
     }
-    const extra = member.contact ? ` (${member.contact})` : "";
-    li.textContent = `${member.name} - ${member.role}${extra}`;
+    appendTextWithPhoneLinks(li, `${member.name} - ${member.role}`);
+    if (member.contact) {
+      li.append(" (");
+      appendTextWithPhoneLinks(li, member.contact);
+      li.append(")");
+    }
     fragment.appendChild(li);
   });
 
@@ -428,24 +502,24 @@ function renderSociety(list) {
   societyListEl.appendChild(fragment);
 }
 
-function renderContacts(list) {
-  contactsListEl.innerHTML = "";
+function renderEmergencyContacts(list) {
+  emergencyContactsListEl.innerHTML = "";
   const fragment = document.createDocumentFragment();
 
   list.forEach((entry) => {
     const li = document.createElement("li");
     const note = entry.notes ? ` (${entry.notes})` : "";
-    li.textContent = `${entry.service}: ${entry.contact}${note}`;
+    appendTextWithPhoneLinks(li, `${entry.service}: ${entry.contact}${note}`);
     fragment.appendChild(li);
   });
 
   if (!list.length) {
     const li = document.createElement("li");
-    li.textContent = "No important contact data found.";
+    li.textContent = "No emergency contact data found.";
     fragment.appendChild(li);
   }
 
-  contactsListEl.appendChild(fragment);
+  emergencyContactsListEl.appendChild(fragment);
 }
 
 function renderOperationsContacts(list) {
@@ -457,16 +531,16 @@ function renderOperationsContacts(list) {
     li.classList.add("ops-item");
 
     const scope = document.createElement("strong");
-    scope.textContent = entry.scope_of_work || "N/A";
+    appendTextWithPhoneLinks(scope, entry.scope_of_work);
 
     const ownerLine = document.createElement("div");
-    ownerLine.textContent = `${entry.name || "N/A"} - ${entry.contact || "N/A"}`;
+    appendTextWithPhoneLinks(ownerLine, `${entry.name || "N/A"} - ${entry.contact || "N/A"}`);
 
     const hoursLine = document.createElement("div");
-    hoursLine.textContent = `Hours: ${entry.office_hours || "N/A"}`;
+    appendTextWithPhoneLinks(hoursLine, `Hours: ${entry.office_hours || "N/A"}`);
 
     const escalationLine = document.createElement("div");
-    escalationLine.textContent = `Escalation: ${entry.escalation_contact || "N/A"}`;
+    appendTextWithPhoneLinks(escalationLine, `Escalation: ${entry.escalation_contact || "N/A"}`);
 
     li.appendChild(scope);
     li.appendChild(ownerLine);
@@ -502,7 +576,7 @@ function applySearch() {
 }
 
 async function fetchFacilities() {
-  const facilitiesCsvUrl = getDataSourceUrl("facilitiesCsvUrl", "sheetCsvUrl");
+  const facilitiesCsvUrl = getDataSourceUrl("facilitiesCsvUrl");
   if (!facilitiesCsvUrl) {
     throw new Error("APP_CONFIG.dataSources.facilitiesCsvUrl is missing in config.js");
   }
@@ -533,15 +607,15 @@ async function fetchSocietyMembers() {
   return mapRowsBySchema(rows, SOCIETY_REQUIRED_COLUMNS, "name");
 }
 
-async function fetchImportantContacts() {
-  const contactsCsvUrl = getDataSourceUrl("contactsCsvUrl");
-  if (!contactsCsvUrl) {
-    throw new Error("APP_CONFIG.dataSources.contactsCsvUrl is missing in config.js");
+async function fetchEmergencyContacts() {
+  const emergencyContactsCsvUrl = getDataSourceUrl("emergencyContactsCsvUrl");
+  if (!emergencyContactsCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.emergencyContactsCsvUrl is missing in config.js");
   }
 
-  const response = await fetch(contactsCsvUrl, { cache: "no-store" });
+  const response = await fetch(emergencyContactsCsvUrl, { cache: "no-store" });
   if (!response.ok) {
-    throw new Error(`Unable to fetch contacts data (${response.status})`);
+    throw new Error(`Unable to fetch emergency contacts data (${response.status})`);
   }
 
   const csv = await response.text();
@@ -568,26 +642,26 @@ async function fetchOperationsContacts() {
 async function loadData() {
   setStatus("Loading data...");
   try {
-    const [facilities, societyMembers, importantContacts, operationsContacts] = await Promise.all([
+    const [facilities, societyMembers, emergencyContacts, operationsContacts] = await Promise.all([
       fetchFacilities(),
       fetchSocietyMembers(),
-      fetchImportantContacts(),
+      fetchEmergencyContacts(),
       fetchOperationsContacts()
     ]);
 
     // facilities.sort((a, b) => a.facility.localeCompare(b.facility));
     // Preserve society member order exactly as provided in society.csv.
-    importantContacts.sort((a, b) => a.service.localeCompare(b.service));
+    emergencyContacts.sort((a, b) => a.service.localeCompare(b.service));
 
     state.facilities = facilities;
     state.filtered = facilities;
     state.societyMembers = societyMembers;
-    state.importantContacts = importantContacts;
+    state.emergencyContacts = emergencyContacts;
     state.operationsContacts = operationsContacts;
 
     renderFacilities(state.filtered);
     renderSociety(state.societyMembers);
-    renderContacts(state.importantContacts);
+    renderEmergencyContacts(state.emergencyContacts);
     renderOperationsContacts(state.operationsContacts);
 
     const optionalMissing = OPTIONAL_COLUMNS.filter(
@@ -604,7 +678,7 @@ async function loadData() {
   } catch (error) {
     listEl.innerHTML = "";
     societyListEl.innerHTML = "";
-    contactsListEl.innerHTML = "";
+    emergencyContactsListEl.innerHTML = "";
     operationsContactsListEl.innerHTML = "";
     setStatus(error.message, true);
     updatedAt.textContent = "Last refreshed: failed";

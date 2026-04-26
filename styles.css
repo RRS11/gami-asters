@@ -280,6 +280,17 @@ body > * {
   margin-top: 4px;
 }
 
+.phone-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.phone-link:hover,
+.phone-link:focus {
+  text-decoration: underline;
+}
+
 .info-list li.important-item {
   background: #fff4da;
   border-left: 4px solid #e09b2d;
@@ -306,6 +317,27 @@ body > * {
 }
 
 .ops-list .ops-item strong {
+  color: var(--logo-purple-2);
+}
+
+.site-footer {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer p + p {
+  margin-top: 4px;
+}
+
+.site-footer strong {
   color: var(--logo-purple-2);
 }
 
