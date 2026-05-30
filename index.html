@@ -35,7 +35,7 @@
     <section class="home-sections" id="homeSections">
       <article class="home-card">
         <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-facility">
-          <h2>Facility Info</h2>
+          <h2><span class="section-icon" aria-hidden="true">🏢</span>Facility Info</h2>
           <span class="chevron" aria-hidden="true">&#9662;</span>
         </button>
         <div class="home-card-body hidden" id="home-body-facility">
@@ -46,19 +46,19 @@
       </article>
       
       <article class="home-card">
-        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-society">
-          <h2>Know Your Society</h2>
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-management-committee">
+          <h2><span class="section-icon" aria-hidden="true">👥</span>Know Your Management Committee</h2>
           <span class="chevron" aria-hidden="true">&#9662;</span>
         </button>
-        <div class="home-card-body hidden" id="home-body-society">
-          <p class="home-card-intro">List of committee members (in file order):</p>
-          <ul class="info-list" id="societyList"></ul>
+        <div class="home-card-body hidden" id="home-body-management-committee">
+          <p class="home-card-intro">List of management committee members (in alphabetical order):</p>
+          <ul class="info-list" id="managementCommitteeList"></ul>
         </div>
       </article>
 
       <article class="home-card">
         <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-emergency-contacts">
-          <h2>Emergency Contacts</h2>
+          <h2><span class="section-icon" aria-hidden="true">🚨</span>Emergency Contacts</h2>
           <span class="chevron" aria-hidden="true">&#9662;</span>
         </button>
         <div class="home-card-body hidden" id="home-body-emergency-contacts">
@@ -69,7 +69,7 @@
 
       <article class="home-card">
         <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-operations-contacts">
-          <h2>Society Operations Contacts</h2>
+          <h2><span class="section-icon" aria-hidden="true">🛠️</span>Society Operations Contacts</h2>
           <span class="chevron" aria-hidden="true">&#9662;</span>
         </button>
         <div class="home-card-body hidden" id="home-body-operations-contacts">
@@ -78,12 +78,21 @@
         </div>
       </article>
 
+      <article class="home-card">
+        <button class="home-card-toggle" type="button" aria-expanded="false" aria-controls="home-body-notices">
+          <h2><span class="section-icon" aria-hidden="true">📄</span>Notice Board</h2>
+          <span class="chevron" aria-hidden="true">&#9662;</span>
+        </button>
+        <div class="home-card-body hidden" id="home-body-notices">
+          <p class="home-card-intro">Past notices and policy documents:</p>
+          <div class="notice-list" id="noticesList"></div>
+        </div>
+      </article>
+
     </section>
 
     <footer class="site-footer">
-      <p>This portal helps Gami Asters CHS members find society and facility information in one place.</p>
-      <p>The details and rules shown here are meant for convenience and general guidance only, and should not be considered official/legal binding.</p>
-      <p>If anything is unclear, please reach out to the society office for confirmation.</p>
+      <p>This portal helps Gami Asters CHS members find society and facility information in one place.The details and rules shown here are meant for convenience and general guidance only, and should not be considered official/legal binding. If anything is unclear, please reach out to the society office for confirmation.</p>
     </footer>
   </main>
 

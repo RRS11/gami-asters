@@ -8,7 +8,7 @@ const REQUIRED_COLUMNS = [
 ];
 
 const OPTIONAL_COLUMNS = ["contact", "notes"];
-const SOCIETY_REQUIRED_COLUMNS = ["name", "role"];
+const MANAGEMENT_COMMITTEE_REQUIRED_COLUMNS = ["name", "role"];
 const CONTACT_REQUIRED_COLUMNS = ["service", "contact"];
 const OPS_CONTACT_REQUIRED_COLUMNS = [
   "scope_of_work",
@@ -17,20 +17,23 @@ const OPS_CONTACT_REQUIRED_COLUMNS = [
   "office_hours",
   "escalation_contact"
 ];
+const NOTICE_REQUIRED_COLUMNS = ["notice_name", "pdf_url"];
 
 const state = {
   facilities: [],
   filtered: [],
-  societyMembers: [],
+  managementCommitteeMembers: [],
   emergencyContacts: [],
-  operationsContacts: []
+  operationsContacts: [],
+  notices: []
 };
 
 const statusEl = document.getElementById("status");
 const listEl = document.getElementById("facilityList");
-const societyListEl = document.getElementById("societyList");
+const managementCommitteeListEl = document.getElementById("managementCommitteeList");
 const emergencyContactsListEl = document.getElementById("emergencyContactsList");
 const operationsContactsListEl = document.getElementById("operationsContactsList");
+const noticesListEl = document.getElementById("noticesList");
 const template = document.getElementById("cardTemplate");
 const searchBox = document.getElementById("searchBox");
 const searchBtn = document.getElementById("searchBtn");
@@ -61,6 +64,49 @@ function openCard(card) {
   const body = card.querySelector(".card-body");
   toggleBtn.setAttribute("aria-expanded", "true");
   body.classList.remove("hidden");
+}
+
+function closeNoticeCard(card) {
+  card.classList.remove("open");
+  const toggleBtn = card.querySelector(".notice-toggle");
+  const body = card.querySelector(".notice-body");
+  toggleBtn.setAttribute("aria-expanded", "false");
+  body.classList.add("hidden");
+}
+
+function openNoticeCard(card) {
+  card.classList.add("open");
+  const toggleBtn = card.querySelector(".notice-toggle");
+  const body = card.querySelector(".notice-body");
+  toggleBtn.setAttribute("aria-expanded", "true");
+  body.classList.remove("hidden");
+
+  if (body.dataset.loaded === "true") {
+    return;
+  }
+
+  body.dataset.loaded = "true";
+  const pdfSrc = body.dataset.pdfSrc || "";
+  if (!pdfSrc) {
+    body.textContent = "PDF link not available.";
+    return;
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.className = "notice-pdf";
+  iframe.src = pdfSrc;
+  iframe.title = card.querySelector(".notice-title")?.textContent || "Notice PDF";
+  iframe.loading = "lazy";
+
+  const link = document.createElement("a");
+  link.className = "notice-pdf-link";
+  link.href = pdfSrc;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = "Open PDF in a new tab";
+
+  body.appendChild(iframe);
+  body.appendChild(link);
 }
 
 function closeHomeCard(card) {
@@ -95,6 +141,9 @@ function collapseAllAccordions() {
   });
   listEl.querySelectorAll(".card.open").forEach((card) => {
     closeCard(card);
+  });
+  noticesListEl.querySelectorAll(".notice-card.open").forEach((card) => {
+    closeNoticeCard(card);
   });
 }
 
@@ -385,6 +434,62 @@ function hasUnmaskedMobileContext(...values) {
   return values.some((value) => /aniket|society manager/i.test(String(value || "")));
 }
 
+function normalizeBadgeType(value) {
+  const type = String(value || "").trim().toLowerCase();
+  if (["info", "important", "danger", "new", "success"].includes(type)) {
+    return type;
+  }
+  return "info";
+}
+
+function getBadgeConfig(item) {
+  if (item.badge) {
+    return {
+      icon: item.icon || "",
+      label: item.badge,
+      type: normalizeBadgeType(item.badge_type)
+    };
+  }
+
+  if (isTruthyFlag(item.imp)) {
+    return {
+      icon: "⭐",
+      label: "Important",
+      type: "important"
+    };
+  }
+
+  return null;
+}
+
+function createBadge({ icon = "", label = "", type = "info" }) {
+  const badge = document.createElement("span");
+  badge.className = `ui-badge ui-badge-${normalizeBadgeType(type)}`;
+  badge.textContent = [icon, label].filter(Boolean).join(" ");
+  return badge;
+}
+
+function appendBadge(parent, item) {
+  const badgeConfig = getBadgeConfig(item);
+  if (!badgeConfig) {
+    return;
+  }
+  parent.appendChild(createBadge(badgeConfig));
+}
+
+function appendInlineIcon(parent, icon) {
+  const value = String(icon || "").trim();
+  if (!value) {
+    return;
+  }
+
+  const iconEl = document.createElement("span");
+  iconEl.className = "row-icon";
+  iconEl.setAttribute("aria-hidden", "true");
+  iconEl.textContent = value;
+  parent.appendChild(iconEl);
+}
+
 function createPhoneLink(value) {
   const formatted = formatIndianMobile(value);
   const link = document.createElement("a");
@@ -458,7 +563,11 @@ function createCard(item, idx) {
   toggleBtn.setAttribute("aria-controls", bodyId);
   body.id = bodyId;
 
-  setTextWithPhoneLinks(card.querySelector(".facility-name"), item.facility);
+  const facilityName = card.querySelector(".facility-name");
+  facilityName.innerHTML = "";
+  appendInlineIcon(facilityName, item.icon);
+  appendTextWithPhoneLinks(facilityName, item.facility);
+  appendBadge(facilityName, item);
   renderNumberedList(card.querySelector(".rules-list"), item.rules_and_regulations, "N/A");
   setTextWithPhoneLinks(card.querySelector(".timings"), item.timings);
   setTextWithPhoneLinks(card.querySelector(".booking"), item.booking_process, "Not applicable");
@@ -499,8 +608,8 @@ function renderFacilities(list) {
   setStatus(`Showing ${list.length} facility record(s).`);
 }
 
-function renderSociety(list) {
-  societyListEl.innerHTML = "";
+function renderManagementCommittee(list) {
+  managementCommitteeListEl.innerHTML = "";
   const fragment = document.createDocumentFragment();
 
   list.forEach((member) => {
@@ -512,6 +621,7 @@ function renderSociety(list) {
       allowFullMobile: hasUnmaskedMobileContext(member.name, member.role)
     };
     appendTextWithPhoneLinks(li, `${member.name} - ${member.role}`, "N/A", phoneOptions);
+    appendBadge(li, member);
     if (member.contact) {
       li.append(" (");
       appendTextWithPhoneLinks(li, member.contact, "N/A", phoneOptions);
@@ -522,11 +632,11 @@ function renderSociety(list) {
 
   if (!list.length) {
     const li = document.createElement("li");
-    li.textContent = "No committee member data found.";
+    li.textContent = "No management committee member data found.";
     fragment.appendChild(li);
   }
 
-  societyListEl.appendChild(fragment);
+  managementCommitteeListEl.appendChild(fragment);
 }
 
 function renderEmergencyContacts(list) {
@@ -540,6 +650,7 @@ function renderEmergencyContacts(list) {
     }
     const note = entry.notes ? ` (${entry.notes})` : "";
     appendTextWithPhoneLinks(li, `${entry.service}: ${entry.contact}${note}`);
+    appendBadge(li, entry);
     fragment.appendChild(li);
   });
 
@@ -562,6 +673,7 @@ function renderOperationsContacts(list) {
 
     const scope = document.createElement("strong");
     appendTextWithPhoneLinks(scope, entry.scope_of_work);
+    appendBadge(scope, entry);
 
     const ownerLine = document.createElement("div");
     appendTextWithPhoneLinks(
@@ -593,6 +705,115 @@ function renderOperationsContacts(list) {
   }
 
   operationsContactsListEl.appendChild(fragment);
+}
+
+function getGoogleDriveFileId(value) {
+  const text = String(value || "").trim();
+  const filePathMatch = text.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+  if (filePathMatch) {
+    return filePathMatch[1];
+  }
+
+  try {
+    const url = new URL(text, window.location.href);
+    if (!/(\.|^)drive\.google\.com$/i.test(url.hostname)) {
+      return "";
+    }
+    return url.searchParams.get("id") || "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function getNoticePdfUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const driveFileId = getGoogleDriveFileId(text);
+  if (driveFileId) {
+    return `https://drive.google.com/file/d/${driveFileId}/preview`;
+  }
+
+  return text;
+}
+
+function createNoticeCard(notice, idx) {
+  const card = document.createElement("article");
+  card.className = "notice-card";
+  if (isTruthyFlag(notice.imp)) {
+    card.classList.add("important-item");
+  }
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "notice-toggle";
+  toggleBtn.type = "button";
+  toggleBtn.setAttribute("aria-expanded", "false");
+  toggleBtn.setAttribute("aria-controls", `notice-body-${idx}`);
+
+  const header = document.createElement("div");
+  header.className = "notice-header";
+
+  const title = document.createElement("h3");
+  title.className = "notice-title";
+  title.textContent = notice.notice_name;
+  appendBadge(title, notice);
+  header.appendChild(title);
+
+  const metaItems = [];
+  if (notice.issued_date) {
+    metaItems.push(`Issued: ${notice.issued_date}`);
+  }
+  if (notice.effective_date) {
+    metaItems.push(`Effective: ${notice.effective_date}`);
+  }
+
+  if (metaItems.length) {
+    const meta = document.createElement("div");
+    meta.className = "notice-meta";
+    meta.textContent = metaItems.join(" | ");
+    header.appendChild(meta);
+  }
+
+  const chevron = document.createElement("span");
+  chevron.className = "chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.textContent = "\u25BE";
+
+  toggleBtn.appendChild(header);
+  toggleBtn.appendChild(chevron);
+
+  const body = document.createElement("div");
+  body.className = "notice-body hidden";
+  body.id = `notice-body-${idx}`;
+  body.dataset.loaded = "false";
+  body.dataset.pdfSrc = getNoticePdfUrl(notice.pdf_url);
+
+  card.appendChild(toggleBtn);
+  card.appendChild(body);
+  return card;
+}
+
+function renderNotices(list) {
+  noticesListEl.innerHTML = "";
+  const validNotices = list
+    .filter((notice) => notice.notice_name && notice.pdf_url)
+    .reverse();
+  const fragment = document.createDocumentFragment();
+
+  validNotices.forEach((notice, idx) => {
+    fragment.appendChild(createNoticeCard(notice, idx));
+  });
+
+  if (!validNotices.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "No past notices found.";
+    fragment.appendChild(empty);
+  }
+
+  noticesListEl.appendChild(fragment);
 }
 
 function applySearch() {
@@ -628,20 +849,20 @@ async function fetchFacilities() {
   return mapRows(rows);
 }
 
-async function fetchSocietyMembers() {
-  const societyCsvUrl = getDataSourceUrl("societyCsvUrl");
-  if (!societyCsvUrl) {
-    throw new Error("APP_CONFIG.dataSources.societyCsvUrl is missing in config.js");
+async function fetchManagementCommitteeMembers() {
+  const managementCommitteeCsvUrl = getDataSourceUrl("managementCommitteeCsvUrl");
+  if (!managementCommitteeCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.managementCommitteeCsvUrl is missing in config.js");
   }
 
-  const response = await fetch(societyCsvUrl, { cache: "no-store" });
+  const response = await fetch(managementCommitteeCsvUrl, { cache: "no-store" });
   if (!response.ok) {
-    throw new Error(`Unable to fetch society data (${response.status})`);
+    throw new Error(`Unable to fetch management committee data (${response.status})`);
   }
 
   const csv = await response.text();
   const rows = parseCSV(csv);
-  return mapRowsBySchema(rows, SOCIETY_REQUIRED_COLUMNS, "name");
+  return mapRowsBySchema(rows, MANAGEMENT_COMMITTEE_REQUIRED_COLUMNS, "name");
 }
 
 async function fetchEmergencyContacts() {
@@ -676,18 +897,41 @@ async function fetchOperationsContacts() {
   return mapRowsBySchema(rows, OPS_CONTACT_REQUIRED_COLUMNS, "scope_of_work");
 }
 
+async function fetchNotices() {
+  const noticesCsvUrl = getDataSourceUrl("noticesCsvUrl");
+  if (!noticesCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.noticesCsvUrl is missing in config.js");
+  }
+
+  const response = await fetch(noticesCsvUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Unable to fetch notices data (${response.status})`);
+  }
+
+  const csv = await response.text();
+  const rows = parseCSV(csv);
+  return mapRowsBySchema(rows, NOTICE_REQUIRED_COLUMNS, "notice_name");
+}
+
 async function loadData() {
   setStatus("Loading data...");
   try {
-    const [facilities, societyMembers, emergencyContacts, operationsContacts] = await Promise.all([
+    const [
+      facilities,
+      managementCommitteeMembers,
+      emergencyContacts,
+      operationsContacts,
+      notices
+    ] = await Promise.all([
       fetchFacilities(),
-      fetchSocietyMembers(),
+      fetchManagementCommitteeMembers(),
       fetchEmergencyContacts(),
-      fetchOperationsContacts()
+      fetchOperationsContacts(),
+      fetchNotices()
     ]);
 
     // facilities.sort((a, b) => a.facility.localeCompare(b.facility));
-    // Preserve society member order exactly as provided in society.csv.
+    // Preserve management committee member order exactly as provided in management_committee.csv.
     emergencyContacts.sort((a, b) => {
       const importantDiff = Number(isTruthyFlag(b.imp)) - Number(isTruthyFlag(a.imp));
       if (importantDiff) {
@@ -698,14 +942,16 @@ async function loadData() {
 
     state.facilities = facilities;
     state.filtered = facilities;
-    state.societyMembers = societyMembers;
+    state.managementCommitteeMembers = managementCommitteeMembers;
     state.emergencyContacts = emergencyContacts;
     state.operationsContacts = operationsContacts;
+    state.notices = notices;
 
     renderFacilities(state.filtered);
-    renderSociety(state.societyMembers);
+    renderManagementCommittee(state.managementCommitteeMembers);
     renderEmergencyContacts(state.emergencyContacts);
     renderOperationsContacts(state.operationsContacts);
+    renderNotices(state.notices);
 
     const optionalMissing = OPTIONAL_COLUMNS.filter(
       (column) => !Object.keys(facilities[0] || {}).includes(column)
@@ -720,9 +966,10 @@ async function loadData() {
     updatedAt.textContent = `Last refreshed: ${new Date().toLocaleString()}`;
   } catch (error) {
     listEl.innerHTML = "";
-    societyListEl.innerHTML = "";
+    managementCommitteeListEl.innerHTML = "";
     emergencyContactsListEl.innerHTML = "";
     operationsContactsListEl.innerHTML = "";
+    noticesListEl.innerHTML = "";
     setStatus(error.message, true);
     updatedAt.textContent = "Last refreshed: failed";
   }
@@ -755,6 +1002,24 @@ listEl.addEventListener("click", (event) => {
 
   if (!isAlreadyOpen) {
     openCard(currentCard);
+  }
+});
+
+noticesListEl.addEventListener("click", (event) => {
+  const toggleBtn = event.target.closest(".notice-toggle");
+  if (!toggleBtn) {
+    return;
+  }
+
+  const currentCard = toggleBtn.closest(".notice-card");
+  const isAlreadyOpen = currentCard.classList.contains("open");
+
+  noticesListEl.querySelectorAll(".notice-card.open").forEach((card) => {
+    closeNoticeCard(card);
+  });
+
+  if (!isAlreadyOpen) {
+    openNoticeCard(currentCard);
   }
 });
 

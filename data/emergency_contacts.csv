@@ -1,5 +1,5 @@
-"service,contact,notes,imp"
-"Maharashtra Emergency Response Team,""112"",""Emergency response"",""true"""
+"service,contact,notes,imp,badge,badge_type,icon"
+"Maharashtra Emergency Response Team,""112"",""Emergency response"",""true"",""Emergency"",""danger"",""🚨"""
 "Police Control Room,""100"",""Civic complaints"""
 "Fire Brigade,""101"",""Fire incidents and rescue"""
 "Ambulance,""108"",""Medical emergency"""
