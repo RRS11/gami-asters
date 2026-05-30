@@ -9,7 +9,7 @@ Current default setup is **local CSV mode** for easy testing, and it can be swit
 `config.js` is already configured to use:
 
 - `./data/facilities.csv`
-- `./data/society.csv`
+- `./data/management_committee.csv`
 - `./data/emergency_contacts.csv`
 - `./data/society_operations_contacts.csv` (operations contacts register)
 - `./data/notices.csv` (past notices register)
@@ -37,7 +37,7 @@ Open:
 - `contact` (optional)
 - `notes` (optional)
 
-`data/society.csv` must include:
+`data/management_committee.csv` must include:
 
 - `name`
 - `role`
@@ -76,7 +76,7 @@ Open:
     e.g. https://docs.google.com/spreadsheets/d/e/2PACX-1vTjeTE3zAWr4XQZmqH0ZsKj0jug2gUqGhD1puOtvNKE033piPOfRfxCl8UNhNLESx7lKiD3kBObDTQ9/pub?output=csv
 
 5. Update `dataSources.facilitiesCsvUrl` in `config.js` with that URL.
-6. Keep `societyCsvUrl`, `emergencyContactsCsvUrl`, and `operationsContactsCsvUrl` pointing to local files, or replace them with your hosted CSV URLs.
+6. Keep `managementCommitteeCsvUrl`, `emergencyContactsCsvUrl`, and `operationsContactsCsvUrl` pointing to local files, or replace them with your hosted CSV URLs.
 
 ## Deploy / Self-Host
 
@@ -87,7 +87,7 @@ Upload these files to your web server or static hosting:
 - `app.js`
 - `config.js`
 - `data/facilities.csv` (local mode)
-- `data/society.csv` (local mode)
+- `data/management_committee.csv` (local mode)
 - `data/emergency_contacts.csv` (local mode)
 - `data/society_operations_contacts.csv` (local mode)
 - `data/notices.csv` (local mode)
@@ -95,7 +95,7 @@ Upload these files to your web server or static hosting:
 ## Features
 
 - Facility cards with timings, rules, booking process, instructor, coordinator, contact, and notes.
-- Society committee section loaded from CSV.
+- Management committee section loaded from CSV.
 - Emergency contacts section loaded from CSV.
 - Society operations contacts section loaded from CSV.
 - Past notices section loaded from CSV with in-page PDF preview, newest row shown first.

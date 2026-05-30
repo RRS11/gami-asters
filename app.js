@@ -8,7 +8,7 @@ const REQUIRED_COLUMNS = [
 ];
 
 const OPTIONAL_COLUMNS = ["contact", "notes"];
-const SOCIETY_REQUIRED_COLUMNS = ["name", "role"];
+const MANAGEMENT_COMMITTEE_REQUIRED_COLUMNS = ["name", "role"];
 const CONTACT_REQUIRED_COLUMNS = ["service", "contact"];
 const OPS_CONTACT_REQUIRED_COLUMNS = [
   "scope_of_work",
@@ -22,7 +22,7 @@ const NOTICE_REQUIRED_COLUMNS = ["notice_name", "pdf_url"];
 const state = {
   facilities: [],
   filtered: [],
-  societyMembers: [],
+  managementCommitteeMembers: [],
   emergencyContacts: [],
   operationsContacts: [],
   notices: []
@@ -30,7 +30,7 @@ const state = {
 
 const statusEl = document.getElementById("status");
 const listEl = document.getElementById("facilityList");
-const societyListEl = document.getElementById("societyList");
+const managementCommitteeListEl = document.getElementById("managementCommitteeList");
 const emergencyContactsListEl = document.getElementById("emergencyContactsList");
 const operationsContactsListEl = document.getElementById("operationsContactsList");
 const noticesListEl = document.getElementById("noticesList");
@@ -548,8 +548,8 @@ function renderFacilities(list) {
   setStatus(`Showing ${list.length} facility record(s).`);
 }
 
-function renderSociety(list) {
-  societyListEl.innerHTML = "";
+function renderManagementCommittee(list) {
+  managementCommitteeListEl.innerHTML = "";
   const fragment = document.createDocumentFragment();
 
   list.forEach((member) => {
@@ -571,11 +571,11 @@ function renderSociety(list) {
 
   if (!list.length) {
     const li = document.createElement("li");
-    li.textContent = "No committee member data found.";
+    li.textContent = "No management committee member data found.";
     fragment.appendChild(li);
   }
 
-  societyListEl.appendChild(fragment);
+  managementCommitteeListEl.appendChild(fragment);
 }
 
 function renderEmergencyContacts(list) {
@@ -785,20 +785,20 @@ async function fetchFacilities() {
   return mapRows(rows);
 }
 
-async function fetchSocietyMembers() {
-  const societyCsvUrl = getDataSourceUrl("societyCsvUrl");
-  if (!societyCsvUrl) {
-    throw new Error("APP_CONFIG.dataSources.societyCsvUrl is missing in config.js");
+async function fetchManagementCommitteeMembers() {
+  const managementCommitteeCsvUrl = getDataSourceUrl("managementCommitteeCsvUrl");
+  if (!managementCommitteeCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.managementCommitteeCsvUrl is missing in config.js");
   }
 
-  const response = await fetch(societyCsvUrl, { cache: "no-store" });
+  const response = await fetch(managementCommitteeCsvUrl, { cache: "no-store" });
   if (!response.ok) {
-    throw new Error(`Unable to fetch society data (${response.status})`);
+    throw new Error(`Unable to fetch management committee data (${response.status})`);
   }
 
   const csv = await response.text();
   const rows = parseCSV(csv);
-  return mapRowsBySchema(rows, SOCIETY_REQUIRED_COLUMNS, "name");
+  return mapRowsBySchema(rows, MANAGEMENT_COMMITTEE_REQUIRED_COLUMNS, "name");
 }
 
 async function fetchEmergencyContacts() {
@@ -852,16 +852,22 @@ async function fetchNotices() {
 async function loadData() {
   setStatus("Loading data...");
   try {
-    const [facilities, societyMembers, emergencyContacts, operationsContacts, notices] = await Promise.all([
+    const [
+      facilities,
+      managementCommitteeMembers,
+      emergencyContacts,
+      operationsContacts,
+      notices
+    ] = await Promise.all([
       fetchFacilities(),
-      fetchSocietyMembers(),
+      fetchManagementCommitteeMembers(),
       fetchEmergencyContacts(),
       fetchOperationsContacts(),
       fetchNotices()
     ]);
 
     // facilities.sort((a, b) => a.facility.localeCompare(b.facility));
-    // Preserve society member order exactly as provided in society.csv.
+    // Preserve management committee member order exactly as provided in management_committee.csv.
     emergencyContacts.sort((a, b) => {
       const importantDiff = Number(isTruthyFlag(b.imp)) - Number(isTruthyFlag(a.imp));
       if (importantDiff) {
@@ -872,13 +878,13 @@ async function loadData() {
 
     state.facilities = facilities;
     state.filtered = facilities;
-    state.societyMembers = societyMembers;
+    state.managementCommitteeMembers = managementCommitteeMembers;
     state.emergencyContacts = emergencyContacts;
     state.operationsContacts = operationsContacts;
     state.notices = notices;
 
     renderFacilities(state.filtered);
-    renderSociety(state.societyMembers);
+    renderManagementCommittee(state.managementCommitteeMembers);
     renderEmergencyContacts(state.emergencyContacts);
     renderOperationsContacts(state.operationsContacts);
     renderNotices(state.notices);
@@ -896,7 +902,7 @@ async function loadData() {
     updatedAt.textContent = `Last refreshed: ${new Date().toLocaleString()}`;
   } catch (error) {
     listEl.innerHTML = "";
-    societyListEl.innerHTML = "";
+    managementCommitteeListEl.innerHTML = "";
     emergencyContactsListEl.innerHTML = "";
     operationsContactsListEl.innerHTML = "";
     noticesListEl.innerHTML = "";
