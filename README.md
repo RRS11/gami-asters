@@ -36,6 +36,7 @@ Open:
 - `coordinator_name`
 - `contact` (optional)
 - `notes` (optional)
+- `badge`, `badge_type`, `icon` (optional)
 
 `data/management_committee.csv` must include:
 
@@ -43,12 +44,15 @@ Open:
 - `role`
 - `contact` (optional)
 - `imp` (optional, highlight row when set to `true`/`yes`/`1`/`y`)
+- `badge`, `badge_type`, `icon` (optional)
 
 `data/emergency_contacts.csv` must include:
 
 - `service`
 - `contact`
 - `notes` (optional)
+- `imp` (optional, highlight row when set to `true`/`yes`/`1`/`y`)
+- `badge`, `badge_type`, `icon` (optional)
 
 `data/society_operations_contacts.csv` includes:
 
@@ -57,6 +61,7 @@ Open:
 - `contact`
 - `office_hours`
 - `escalation_contact`
+- `badge`, `badge_type`, `icon` (optional)
 
 `data/notices.csv` includes:
 
@@ -65,6 +70,15 @@ Open:
 - `issued_date` (optional)
 - `effective_date` (optional)
 - `imp` (optional, highlight row when set to `true`/`yes`/`1`/`y`)
+- `badge`, `badge_type`, `icon` (optional)
+
+Optional badge columns can be used in any CSV-backed section that supports them:
+
+- `badge`: visible badge text, for example `New`, `Important`, or `Emergency`
+- `badge_type`: one of `info`, `important`, `danger`, `new`, or `success`
+- `icon`: optional emoji/icon shown before the badge text
+
+When `imp` is true and no custom badge is provided, the UI shows a default `Important` badge.
 
 ## Switch to Google Sheet Backend
 
@@ -99,6 +113,7 @@ Upload these files to your web server or static hosting:
 - Emergency contacts section loaded from CSV.
 - Society operations contacts section loaded from CSV.
 - Past notices section loaded from CSV with in-page PDF preview, newest row shown first.
+- Reusable header icons and CSV-driven badges for important, danger, new, info, and success labels.
 - Search filter across all key fields.
 - Manual refresh button to reload latest data.
 

@@ -434,6 +434,62 @@ function hasUnmaskedMobileContext(...values) {
   return values.some((value) => /aniket|society manager/i.test(String(value || "")));
 }
 
+function normalizeBadgeType(value) {
+  const type = String(value || "").trim().toLowerCase();
+  if (["info", "important", "danger", "new", "success"].includes(type)) {
+    return type;
+  }
+  return "info";
+}
+
+function getBadgeConfig(item) {
+  if (item.badge) {
+    return {
+      icon: item.icon || "",
+      label: item.badge,
+      type: normalizeBadgeType(item.badge_type)
+    };
+  }
+
+  if (isTruthyFlag(item.imp)) {
+    return {
+      icon: "⭐",
+      label: "Important",
+      type: "important"
+    };
+  }
+
+  return null;
+}
+
+function createBadge({ icon = "", label = "", type = "info" }) {
+  const badge = document.createElement("span");
+  badge.className = `ui-badge ui-badge-${normalizeBadgeType(type)}`;
+  badge.textContent = [icon, label].filter(Boolean).join(" ");
+  return badge;
+}
+
+function appendBadge(parent, item) {
+  const badgeConfig = getBadgeConfig(item);
+  if (!badgeConfig) {
+    return;
+  }
+  parent.appendChild(createBadge(badgeConfig));
+}
+
+function appendInlineIcon(parent, icon) {
+  const value = String(icon || "").trim();
+  if (!value) {
+    return;
+  }
+
+  const iconEl = document.createElement("span");
+  iconEl.className = "row-icon";
+  iconEl.setAttribute("aria-hidden", "true");
+  iconEl.textContent = value;
+  parent.appendChild(iconEl);
+}
+
 function createPhoneLink(value) {
   const formatted = formatIndianMobile(value);
   const link = document.createElement("a");
@@ -507,7 +563,11 @@ function createCard(item, idx) {
   toggleBtn.setAttribute("aria-controls", bodyId);
   body.id = bodyId;
 
-  setTextWithPhoneLinks(card.querySelector(".facility-name"), item.facility);
+  const facilityName = card.querySelector(".facility-name");
+  facilityName.innerHTML = "";
+  appendInlineIcon(facilityName, item.icon);
+  appendTextWithPhoneLinks(facilityName, item.facility);
+  appendBadge(facilityName, item);
   renderNumberedList(card.querySelector(".rules-list"), item.rules_and_regulations, "N/A");
   setTextWithPhoneLinks(card.querySelector(".timings"), item.timings);
   setTextWithPhoneLinks(card.querySelector(".booking"), item.booking_process, "Not applicable");
@@ -561,6 +621,7 @@ function renderManagementCommittee(list) {
       allowFullMobile: hasUnmaskedMobileContext(member.name, member.role)
     };
     appendTextWithPhoneLinks(li, `${member.name} - ${member.role}`, "N/A", phoneOptions);
+    appendBadge(li, member);
     if (member.contact) {
       li.append(" (");
       appendTextWithPhoneLinks(li, member.contact, "N/A", phoneOptions);
@@ -589,6 +650,7 @@ function renderEmergencyContacts(list) {
     }
     const note = entry.notes ? ` (${entry.notes})` : "";
     appendTextWithPhoneLinks(li, `${entry.service}: ${entry.contact}${note}`);
+    appendBadge(li, entry);
     fragment.appendChild(li);
   });
 
@@ -611,6 +673,7 @@ function renderOperationsContacts(list) {
 
     const scope = document.createElement("strong");
     appendTextWithPhoneLinks(scope, entry.scope_of_work);
+    appendBadge(scope, entry);
 
     const ownerLine = document.createElement("div");
     appendTextWithPhoneLinks(
@@ -695,6 +758,7 @@ function createNoticeCard(notice, idx) {
   const title = document.createElement("h3");
   title.className = "notice-title";
   title.textContent = notice.notice_name;
+  appendBadge(title, notice);
   header.appendChild(title);
 
   const metaItems = [];

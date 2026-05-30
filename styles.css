@@ -161,6 +161,16 @@ body > * {
   margin: 0;
   font-size: 1.1rem;
   text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.row-icon {
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  line-height: 1;
 }
 
 .card p {
@@ -250,10 +260,19 @@ body > * {
   margin: 0;
   font-size: 1.15rem;
   text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .home-card-toggle:hover {
   background: var(--accent-soft);
+}
+
+.section-icon {
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .home-card.open .chevron {
@@ -297,6 +316,45 @@ body > * {
   border-radius: 6px;
   margin-left: -6px;
   padding: 4px 8px;
+}
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+.ui-badge-info {
+  background: #eee7fb;
+  color: #5c4694;
+}
+
+.ui-badge-important {
+  background: #fff4da;
+  color: #7a4d12;
+}
+
+.ui-badge-danger {
+  background: #fde8e8;
+  color: #8a1f1f;
+}
+
+.ui-badge-new {
+  background: #e8f4ff;
+  color: #1d4f7a;
+}
+
+.ui-badge-success {
+  background: #e8f7ed;
+  color: #24613c;
 }
 
 .ops-list {
