@@ -293,7 +293,7 @@ body > * {
 
 .info-list li.important-item {
   background: #fff4da;
-  border-left: 4px solid #e09b2d;
+  border-left: 4px solid #ff002a;
   border-radius: 6px;
   margin-left: -6px;
   padding: 4px 8px;
@@ -318,6 +318,93 @@ body > * {
 
 .ops-list .ops-item strong {
   color: var(--logo-purple-2);
+}
+
+.notice-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notice-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fffaf2;
+  overflow: hidden;
+}
+
+.notice-card.important-item {
+  background: #fff4da;
+  border-left: 4px solid #ff002a;
+}
+
+.notice-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.notice-toggle:hover {
+  background: var(--accent-soft);
+}
+
+.notice-header {
+  min-width: 0;
+  text-align: left;
+}
+
+.notice-title {
+  margin: 0;
+  color: var(--logo-purple-2);
+  font-size: 1rem;
+}
+
+.notice-meta {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.notice-card.open .chevron {
+  transform: rotate(180deg);
+}
+
+.notice-body {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.notice-pdf {
+  width: 100%;
+  height: min(72vh, 720px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.notice-pdf-link {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.notice-pdf-link:hover,
+.notice-pdf-link:focus {
+  text-decoration: underline;
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--muted);
 }
 
 .site-footer {

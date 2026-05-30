@@ -12,6 +12,7 @@ Current default setup is **local CSV mode** for easy testing, and it can be swit
 - `./data/society.csv`
 - `./data/emergency_contacts.csv`
 - `./data/society_operations_contacts.csv` (operations contacts register)
+- `./data/notices.csv` (past notices register)
 
 Run a local static server:
 
@@ -57,6 +58,14 @@ Open:
 - `office_hours`
 - `escalation_contact`
 
+`data/notices.csv` includes:
+
+- `notice_name`
+- `pdf_url`
+- `issued_date` (optional)
+- `effective_date` (optional)
+- `imp` (optional, highlight row when set to `true`/`yes`/`1`/`y`)
+
 ## Switch to Google Sheet Backend
 
 1. Create one Google Sheet tab (example: `Facilities`) with the same columns listed above.
@@ -81,6 +90,7 @@ Upload these files to your web server or static hosting:
 - `data/society.csv` (local mode)
 - `data/emergency_contacts.csv` (local mode)
 - `data/society_operations_contacts.csv` (local mode)
+- `data/notices.csv` (local mode)
 
 ## Features
 
@@ -88,6 +98,7 @@ Upload these files to your web server or static hosting:
 - Society committee section loaded from CSV.
 - Emergency contacts section loaded from CSV.
 - Society operations contacts section loaded from CSV.
+- Past notices section loaded from CSV with in-page PDF preview, newest row shown first.
 - Search filter across all key fields.
 - Manual refresh button to reload latest data.
 

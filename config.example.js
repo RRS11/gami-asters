@@ -4,6 +4,7 @@ window.APP_CONFIG = {
     facilitiesCsvUrl: "./data/facilities.csv",
     societyCsvUrl: "./data/society.csv",
     emergencyContactsCsvUrl: "./data/emergency_contacts.csv",
-    operationsContactsCsvUrl: "./data/society_operations_contacts.csv"
+    operationsContactsCsvUrl: "./data/society_operations_contacts.csv",
+    noticesCsvUrl: "./data/notices.csv"
   }
 };

@@ -17,13 +17,15 @@ const OPS_CONTACT_REQUIRED_COLUMNS = [
   "office_hours",
   "escalation_contact"
 ];
+const NOTICE_REQUIRED_COLUMNS = ["notice_name", "pdf_url"];
 
 const state = {
   facilities: [],
   filtered: [],
   societyMembers: [],
   emergencyContacts: [],
-  operationsContacts: []
+  operationsContacts: [],
+  notices: []
 };
 
 const statusEl = document.getElementById("status");
@@ -31,6 +33,7 @@ const listEl = document.getElementById("facilityList");
 const societyListEl = document.getElementById("societyList");
 const emergencyContactsListEl = document.getElementById("emergencyContactsList");
 const operationsContactsListEl = document.getElementById("operationsContactsList");
+const noticesListEl = document.getElementById("noticesList");
 const template = document.getElementById("cardTemplate");
 const searchBox = document.getElementById("searchBox");
 const searchBtn = document.getElementById("searchBtn");
@@ -61,6 +64,49 @@ function openCard(card) {
   const body = card.querySelector(".card-body");
   toggleBtn.setAttribute("aria-expanded", "true");
   body.classList.remove("hidden");
+}
+
+function closeNoticeCard(card) {
+  card.classList.remove("open");
+  const toggleBtn = card.querySelector(".notice-toggle");
+  const body = card.querySelector(".notice-body");
+  toggleBtn.setAttribute("aria-expanded", "false");
+  body.classList.add("hidden");
+}
+
+function openNoticeCard(card) {
+  card.classList.add("open");
+  const toggleBtn = card.querySelector(".notice-toggle");
+  const body = card.querySelector(".notice-body");
+  toggleBtn.setAttribute("aria-expanded", "true");
+  body.classList.remove("hidden");
+
+  if (body.dataset.loaded === "true") {
+    return;
+  }
+
+  body.dataset.loaded = "true";
+  const pdfSrc = body.dataset.pdfSrc || "";
+  if (!pdfSrc) {
+    body.textContent = "PDF link not available.";
+    return;
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.className = "notice-pdf";
+  iframe.src = pdfSrc;
+  iframe.title = card.querySelector(".notice-title")?.textContent || "Notice PDF";
+  iframe.loading = "lazy";
+
+  const link = document.createElement("a");
+  link.className = "notice-pdf-link";
+  link.href = pdfSrc;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = "Open PDF in a new tab";
+
+  body.appendChild(iframe);
+  body.appendChild(link);
 }
 
 function closeHomeCard(card) {
@@ -95,6 +141,9 @@ function collapseAllAccordions() {
   });
   listEl.querySelectorAll(".card.open").forEach((card) => {
     closeCard(card);
+  });
+  noticesListEl.querySelectorAll(".notice-card.open").forEach((card) => {
+    closeNoticeCard(card);
   });
 }
 
@@ -595,6 +644,114 @@ function renderOperationsContacts(list) {
   operationsContactsListEl.appendChild(fragment);
 }
 
+function getGoogleDriveFileId(value) {
+  const text = String(value || "").trim();
+  const filePathMatch = text.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+  if (filePathMatch) {
+    return filePathMatch[1];
+  }
+
+  try {
+    const url = new URL(text, window.location.href);
+    if (!/(\.|^)drive\.google\.com$/i.test(url.hostname)) {
+      return "";
+    }
+    return url.searchParams.get("id") || "";
+  } catch (_error) {
+    return "";
+  }
+}
+
+function getNoticePdfUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  const driveFileId = getGoogleDriveFileId(text);
+  if (driveFileId) {
+    return `https://drive.google.com/file/d/${driveFileId}/preview`;
+  }
+
+  return text;
+}
+
+function createNoticeCard(notice, idx) {
+  const card = document.createElement("article");
+  card.className = "notice-card";
+  if (isTruthyFlag(notice.imp)) {
+    card.classList.add("important-item");
+  }
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.className = "notice-toggle";
+  toggleBtn.type = "button";
+  toggleBtn.setAttribute("aria-expanded", "false");
+  toggleBtn.setAttribute("aria-controls", `notice-body-${idx}`);
+
+  const header = document.createElement("div");
+  header.className = "notice-header";
+
+  const title = document.createElement("h3");
+  title.className = "notice-title";
+  title.textContent = notice.notice_name;
+  header.appendChild(title);
+
+  const metaItems = [];
+  if (notice.issued_date) {
+    metaItems.push(`Issued: ${notice.issued_date}`);
+  }
+  if (notice.effective_date) {
+    metaItems.push(`Effective: ${notice.effective_date}`);
+  }
+
+  if (metaItems.length) {
+    const meta = document.createElement("div");
+    meta.className = "notice-meta";
+    meta.textContent = metaItems.join(" | ");
+    header.appendChild(meta);
+  }
+
+  const chevron = document.createElement("span");
+  chevron.className = "chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.textContent = "\u25BE";
+
+  toggleBtn.appendChild(header);
+  toggleBtn.appendChild(chevron);
+
+  const body = document.createElement("div");
+  body.className = "notice-body hidden";
+  body.id = `notice-body-${idx}`;
+  body.dataset.loaded = "false";
+  body.dataset.pdfSrc = getNoticePdfUrl(notice.pdf_url);
+
+  card.appendChild(toggleBtn);
+  card.appendChild(body);
+  return card;
+}
+
+function renderNotices(list) {
+  noticesListEl.innerHTML = "";
+  const validNotices = list
+    .filter((notice) => notice.notice_name && notice.pdf_url)
+    .reverse();
+  const fragment = document.createDocumentFragment();
+
+  validNotices.forEach((notice, idx) => {
+    fragment.appendChild(createNoticeCard(notice, idx));
+  });
+
+  if (!validNotices.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "No past notices found.";
+    fragment.appendChild(empty);
+  }
+
+  noticesListEl.appendChild(fragment);
+}
+
 function applySearch() {
   const query = searchBox.value.trim().toLowerCase();
   if (query.length > 0 && query.length < 3) {
@@ -676,14 +833,31 @@ async function fetchOperationsContacts() {
   return mapRowsBySchema(rows, OPS_CONTACT_REQUIRED_COLUMNS, "scope_of_work");
 }
 
+async function fetchNotices() {
+  const noticesCsvUrl = getDataSourceUrl("noticesCsvUrl");
+  if (!noticesCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.noticesCsvUrl is missing in config.js");
+  }
+
+  const response = await fetch(noticesCsvUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Unable to fetch notices data (${response.status})`);
+  }
+
+  const csv = await response.text();
+  const rows = parseCSV(csv);
+  return mapRowsBySchema(rows, NOTICE_REQUIRED_COLUMNS, "notice_name");
+}
+
 async function loadData() {
   setStatus("Loading data...");
   try {
-    const [facilities, societyMembers, emergencyContacts, operationsContacts] = await Promise.all([
+    const [facilities, societyMembers, emergencyContacts, operationsContacts, notices] = await Promise.all([
       fetchFacilities(),
       fetchSocietyMembers(),
       fetchEmergencyContacts(),
-      fetchOperationsContacts()
+      fetchOperationsContacts(),
+      fetchNotices()
     ]);
 
     // facilities.sort((a, b) => a.facility.localeCompare(b.facility));
@@ -701,11 +875,13 @@ async function loadData() {
     state.societyMembers = societyMembers;
     state.emergencyContacts = emergencyContacts;
     state.operationsContacts = operationsContacts;
+    state.notices = notices;
 
     renderFacilities(state.filtered);
     renderSociety(state.societyMembers);
     renderEmergencyContacts(state.emergencyContacts);
     renderOperationsContacts(state.operationsContacts);
+    renderNotices(state.notices);
 
     const optionalMissing = OPTIONAL_COLUMNS.filter(
       (column) => !Object.keys(facilities[0] || {}).includes(column)
@@ -723,6 +899,7 @@ async function loadData() {
     societyListEl.innerHTML = "";
     emergencyContactsListEl.innerHTML = "";
     operationsContactsListEl.innerHTML = "";
+    noticesListEl.innerHTML = "";
     setStatus(error.message, true);
     updatedAt.textContent = "Last refreshed: failed";
   }
@@ -755,6 +932,24 @@ listEl.addEventListener("click", (event) => {
 
   if (!isAlreadyOpen) {
     openCard(currentCard);
+  }
+});
+
+noticesListEl.addEventListener("click", (event) => {
+  const toggleBtn = event.target.closest(".notice-toggle");
+  if (!toggleBtn) {
+    return;
+  }
+
+  const currentCard = toggleBtn.closest(".notice-card");
+  const isAlreadyOpen = currentCard.classList.contains("open");
+
+  noticesListEl.querySelectorAll(".notice-card.open").forEach((card) => {
+    closeNoticeCard(card);
+  });
+
+  if (!isAlreadyOpen) {
+    openNoticeCard(currentCard);
   }
 });
 
