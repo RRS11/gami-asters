@@ -354,15 +354,35 @@ function isPhoneMatch(value) {
   return Boolean(formatIndianMobile(value));
 }
 
-function formatIndianMobile(value) {
+function getIndianMobileDigits(value) {
   const digits = String(value || "").replace(/\D/g, "");
   if (digits.length === 12 && digits.startsWith("91")) {
-    return `+91-${digits.slice(2)}`;
+    return digits.slice(2);
   }
   if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return digits;
+  }
+  return "";
+}
+
+function formatIndianMobile(value) {
+  const digits = getIndianMobileDigits(value);
+  if (digits) {
     return `+91-${digits}`;
   }
   return "";
+}
+
+function maskIndianMobile(value) {
+  const digits = getIndianMobileDigits(value);
+  if (!digits) {
+    return value;
+  }
+  return `${digits.slice(0, 2)}XXXXXX${digits.slice(-2)}`;
+}
+
+function hasUnmaskedMobileContext(...values) {
+  return values.some((value) => /aniket|society manager/i.test(String(value || "")));
 }
 
 function createPhoneLink(value) {
@@ -375,7 +395,7 @@ function createPhoneLink(value) {
   return link;
 }
 
-function appendTextWithPhoneLinks(parent, value, fallbackText = "N/A") {
+function appendTextWithPhoneLinks(parent, value, fallbackText = "N/A", options = {}) {
   const text = value || fallbackText;
   if (!text) {
     parent.append(fallbackText);
@@ -394,7 +414,11 @@ function appendTextWithPhoneLinks(parent, value, fallbackText = "N/A") {
     if (match.index > lastIndex) {
       parent.append(String(text).slice(lastIndex, match.index));
     }
-    parent.appendChild(createPhoneLink(phoneText));
+    if (options.allowFullMobile) {
+      parent.appendChild(createPhoneLink(phoneText));
+    } else {
+      parent.append(maskIndianMobile(phoneText));
+    }
     lastIndex = match.index + phoneText.length;
   }
 
@@ -408,19 +432,19 @@ function appendTextWithPhoneLinks(parent, value, fallbackText = "N/A") {
   }
 }
 
-function setTextWithPhoneLinks(element, value, fallbackText = "N/A") {
+function setTextWithPhoneLinks(element, value, fallbackText = "N/A", options = {}) {
   element.innerHTML = "";
-  appendTextWithPhoneLinks(element, value, fallbackText);
+  appendTextWithPhoneLinks(element, value, fallbackText, options);
 }
 
-function renderNumberedList(listEl, rawValue, fallbackText = "N/A") {
+function renderNumberedList(listEl, rawValue, fallbackText = "N/A", options = {}) {
   listEl.innerHTML = "";
   const points = splitIntoPoints(rawValue);
   const finalPoints = points.length ? points : [fallbackText];
 
   finalPoints.forEach((point) => {
     const li = document.createElement("li");
-    appendTextWithPhoneLinks(li, point);
+    appendTextWithPhoneLinks(li, point, "N/A", options);
     listEl.appendChild(li);
   });
 }
@@ -484,10 +508,13 @@ function renderSociety(list) {
     if (isTruthyFlag(member.imp)) {
       li.classList.add("important-item");
     }
-    appendTextWithPhoneLinks(li, `${member.name} - ${member.role}`);
+    const phoneOptions = {
+      allowFullMobile: hasUnmaskedMobileContext(member.name, member.role)
+    };
+    appendTextWithPhoneLinks(li, `${member.name} - ${member.role}`, "N/A", phoneOptions);
     if (member.contact) {
       li.append(" (");
-      appendTextWithPhoneLinks(li, member.contact);
+      appendTextWithPhoneLinks(li, member.contact, "N/A", phoneOptions);
       li.append(")");
     }
     fragment.appendChild(li);
@@ -508,6 +535,9 @@ function renderEmergencyContacts(list) {
 
   list.forEach((entry) => {
     const li = document.createElement("li");
+    if (isTruthyFlag(entry.imp)) {
+      li.classList.add("important-item");
+    }
     const note = entry.notes ? ` (${entry.notes})` : "";
     appendTextWithPhoneLinks(li, `${entry.service}: ${entry.contact}${note}`);
     fragment.appendChild(li);
@@ -534,7 +564,14 @@ function renderOperationsContacts(list) {
     appendTextWithPhoneLinks(scope, entry.scope_of_work);
 
     const ownerLine = document.createElement("div");
-    appendTextWithPhoneLinks(ownerLine, `${entry.name || "N/A"} - ${entry.contact || "N/A"}`);
+    appendTextWithPhoneLinks(
+      ownerLine,
+      `${entry.name || "N/A"} - ${entry.contact || "N/A"}`,
+      "N/A",
+      {
+        allowFullMobile: hasUnmaskedMobileContext(entry.name, entry.scope_of_work)
+      }
+    );
 
     const hoursLine = document.createElement("div");
     appendTextWithPhoneLinks(hoursLine, `Hours: ${entry.office_hours || "N/A"}`);
@@ -651,7 +688,13 @@ async function loadData() {
 
     // facilities.sort((a, b) => a.facility.localeCompare(b.facility));
     // Preserve society member order exactly as provided in society.csv.
-    emergencyContacts.sort((a, b) => a.service.localeCompare(b.service));
+    emergencyContacts.sort((a, b) => {
+      const importantDiff = Number(isTruthyFlag(b.imp)) - Number(isTruthyFlag(a.imp));
+      if (importantDiff) {
+        return importantDiff;
+      }
+      return a.service.localeCompare(b.service);
+    });
 
     state.facilities = facilities;
     state.filtered = facilities;
