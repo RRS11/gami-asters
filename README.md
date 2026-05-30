@@ -12,6 +12,7 @@ Current default setup is **local CSV mode** for easy testing, and it can be swit
 - `./data/society.csv`
 - `./data/emergency_contacts.csv`
 - `./data/society_operations_contacts.csv` (operations contacts register)
+- `./data/members.csv` (simple login allowlist)
 
 Run a local static server:
 
@@ -24,6 +25,20 @@ Open:
 `http://localhost:8080`
 
 ## Data File Format
+
+`data/members.csv` controls the client-side login screen and must include at least one of:
+
+- `email`
+- `mobile`
+- `phone`
+- `contact`
+
+Residents can sign in with either their registered email or mobile number. Mobile matching accepts `9876543210`, `+91 9876543210`, and `91-9876543210` style values as the same number.
+
+Local test logins are included in `data/members.csv`:
+
+- `demo@gami-asters.example`
+- `+91-9004350403`
 
 `data/facilities.csv` must include these columns:
 
@@ -67,7 +82,8 @@ Open:
     e.g. https://docs.google.com/spreadsheets/d/e/2PACX-1vTjeTE3zAWr4XQZmqH0ZsKj0jug2gUqGhD1puOtvNKE033piPOfRfxCl8UNhNLESx7lKiD3kBObDTQ9/pub?output=csv
 
 5. Update `dataSources.facilitiesCsvUrl` in `config.js` with that URL.
-6. Keep `societyCsvUrl`, `emergencyContactsCsvUrl`, and `operationsContactsCsvUrl` pointing to local files, or replace them with your hosted CSV URLs.
+6. Repeat the same publish-to-CSV process for the member allowlist sheet and update `membersCsvUrl` in `config.js`.
+7. Keep `societyCsvUrl`, `emergencyContactsCsvUrl`, and `operationsContactsCsvUrl` pointing to local files, or replace them with your hosted CSV URLs.
 
 ## Deploy / Self-Host
 
@@ -81,6 +97,7 @@ Upload these files to your web server or static hosting:
 - `data/society.csv` (local mode)
 - `data/emergency_contacts.csv` (local mode)
 - `data/society_operations_contacts.csv` (local mode)
+- `data/members.csv` (local login allowlist mode)
 
 ## Features
 
@@ -90,9 +107,11 @@ Upload these files to your web server or static hosting:
 - Society operations contacts section loaded from CSV.
 - Search filter across all key fields.
 - Manual refresh button to reload latest data.
+- Simple client-side member login with 30-day browser session.
 
 ## Notes
 
 - Column names are case-insensitive, spaces are normalized.
 - Required columns must be present.
 - For private sheet access (not public CSV), use Google Apps Script or authenticated API flow.
+- The login gate is only a convenience filter for members. Because this is a static client-side site, anyone with browser/network tools can still inspect the published member CSV and other public CSV URLs.

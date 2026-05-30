@@ -52,6 +52,99 @@ body > * {
   padding: 24px;
 }
 
+.auth-container {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.auth-panel {
+  width: min(100%, 460px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(32, 24, 56, 0.12);
+}
+
+.auth-logo {
+  width: 150px;
+  height: auto;
+  display: block;
+  margin-bottom: 16px;
+  opacity: var(--hero-logo-opacity);
+}
+
+.auth-copy h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  background: linear-gradient(130deg, #c98f4a 0%, #c1708a 45%, #6d5fa8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-copy p {
+  margin: 6px 0 20px;
+  color: var(--muted);
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.auth-fields {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-fields input {
+  min-width: 0;
+  flex: 1;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font: inherit;
+}
+
+.auth-fields button,
+.logout-btn {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-fields button {
+  padding: 0 16px;
+}
+
+.auth-fields button:hover,
+.logout-btn:hover {
+  background: #b75644;
+}
+
+.auth-fields button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.auth-message {
+  min-height: 22px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.auth-message.error {
+  color: var(--error);
+}
+
 .hero {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -61,6 +154,12 @@ body > * {
   display: flex;
   align-items: center;
   gap: 30px;
+}
+
+.logout-btn {
+  margin-left: auto;
+  padding: 10px 14px;
+  flex: 0 0 auto;
 }
 
 .hero h1 {
@@ -363,5 +462,22 @@ body > * {
 
   .toolbar button {
     height: 42px;
+  }
+
+  .auth-panel {
+    padding: 18px;
+  }
+
+  .auth-fields {
+    flex-direction: column;
+  }
+
+  .auth-fields button {
+    height: 42px;
+  }
+
+  .logout-btn {
+    width: 100%;
+    margin-left: 0;
   }
 }

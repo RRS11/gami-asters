@@ -17,15 +17,27 @@ const OPS_CONTACT_REQUIRED_COLUMNS = [
   "office_hours",
   "escalation_contact"
 ];
+const MEMBER_EMAIL_COLUMNS = ["email"];
+const MEMBER_MOBILE_COLUMNS = ["mobile", "phone", "contact"];
+const AUTH_STORAGE_KEY = "ga-member-authenticated-at";
+const AUTH_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const state = {
   facilities: [],
   filtered: [],
   societyMembers: [],
   emergencyContacts: [],
-  operationsContacts: []
+  operationsContacts: [],
+  authorizedMembers: [],
+  hasLoadedPortalData: false
 };
 
+const authScreen = document.getElementById("authScreen");
+const appShell = document.getElementById("appShell");
+const authForm = document.getElementById("authForm");
+const authInput = document.getElementById("authInput");
+const authMessage = document.getElementById("authMessage");
+const logoutBtn = document.getElementById("logoutBtn");
 const statusEl = document.getElementById("status");
 const listEl = document.getElementById("facilityList");
 const societyListEl = document.getElementById("societyList");
@@ -45,6 +57,91 @@ const PHONE_PATTERN = /(?:\+91[\s-]?\d{5}\s?\d{5}|\b[6-9]\d{9}\b)/g;
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle("error", isError);
+}
+
+function setAuthMessage(message, isError = false) {
+  authMessage.textContent = message;
+  authMessage.classList.toggle("error", isError);
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeMobile(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return digits;
+  }
+  return "";
+}
+
+function getMobileCandidates(value) {
+  const candidates = new Set();
+  const directMatch = normalizeMobile(value);
+  if (directMatch) {
+    candidates.add(directMatch);
+  }
+
+  const matches = String(value || "").match(/\+?91[\s-]?\d{5}\s?\d{5}|\b[6-9]\d{9}\b/g) || [];
+  matches.forEach((match) => {
+    const normalized = normalizeMobile(match);
+    if (normalized) {
+      candidates.add(normalized);
+    }
+  });
+
+  return Array.from(candidates);
+}
+
+function getStoredAuthTime() {
+  try {
+    return Number(window.localStorage.getItem(AUTH_STORAGE_KEY));
+  } catch (error) {
+    return 0;
+  }
+}
+
+function saveAuthSession() {
+  try {
+    window.localStorage.setItem(AUTH_STORAGE_KEY, String(Date.now()));
+  } catch (error) {
+    // Login still works for this browser tab when storage is unavailable.
+  }
+}
+
+function clearAuthSession() {
+  try {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (error) {
+    // Nothing else to clear.
+  }
+}
+
+function hasValidAuthSession() {
+  const authenticatedAt = getStoredAuthTime();
+  return authenticatedAt > 0 && Date.now() - authenticatedAt <= AUTH_SESSION_MS;
+}
+
+function showAuthScreen(message = "") {
+  appShell.classList.add("hidden");
+  authScreen.classList.remove("hidden");
+  setAuthMessage(message);
+  authInput.focus();
+}
+
+function showPortal() {
+  authScreen.classList.add("hidden");
+  appShell.classList.remove("hidden");
+  setAuthMessage("");
+
+  if (!state.hasLoadedPortalData) {
+    state.hasLoadedPortalData = true;
+    loadData();
+  }
 }
 
 function closeCard(card) {
@@ -294,6 +391,57 @@ function mapRowsBySchema(rows, requiredColumns, filterKey) {
       return item;
     })
     .filter((item) => item[filterKey]);
+}
+
+function mapMemberRows(rows) {
+  if (!rows.length) {
+    throw new Error("No member data found in sheet.");
+  }
+
+  if (rows[0].length === 1 && rows[0][0].includes(",")) {
+    const rebuiltCsv = rows.map((row) => row[0] || "").join("\n");
+    rows = parseCSV(rebuiltCsv);
+  }
+
+  if (!rows.length) {
+    throw new Error("No member data found in sheet.");
+  }
+
+  const headers = rows[0].map((h) => normalizeKey(h));
+  const emailIndexes = MEMBER_EMAIL_COLUMNS
+    .map((column) => headers.indexOf(column))
+    .filter((idx) => idx >= 0);
+  const mobileIndexes = MEMBER_MOBILE_COLUMNS
+    .map((column) => headers.indexOf(column))
+    .filter((idx) => idx >= 0);
+
+  if (!emailIndexes.length && !mobileIndexes.length) {
+    throw new Error("Member sheet must include email, mobile, phone, or contact column.");
+  }
+
+  return rows
+    .slice(1)
+    .map((cells) => {
+      const emails = emailIndexes
+        .map((idx) => normalizeEmail(cells[idx]))
+        .filter(Boolean);
+      const mobiles = mobileIndexes.flatMap((idx) => getMobileCandidates(cells[idx]));
+
+      return { emails, mobiles };
+    })
+    .filter((member) => member.emails.length || member.mobiles.length);
+}
+
+function isAuthorizedMember(value, members) {
+  const email = normalizeEmail(value);
+  const mobile = normalizeMobile(value);
+
+  return members.some((member) => {
+    if (email && email.includes("@") && member.emails.includes(email)) {
+      return true;
+    }
+    return Boolean(mobile && member.mobiles.includes(mobile));
+  });
 }
 
 function splitIntoPoints(value) {
@@ -575,6 +723,22 @@ function applySearch() {
   renderFacilities(state.filtered);
 }
 
+async function fetchMembers() {
+  const membersCsvUrl = getDataSourceUrl("membersCsvUrl");
+  if (!membersCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.membersCsvUrl is missing in config.js");
+  }
+
+  const response = await fetch(membersCsvUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Unable to fetch member data (${response.status})`);
+  }
+
+  const csv = await response.text();
+  const rows = parseCSV(csv);
+  return mapMemberRows(rows);
+}
+
 async function fetchFacilities() {
   const facilitiesCsvUrl = getDataSourceUrl("facilitiesCsvUrl");
   if (!facilitiesCsvUrl) {
@@ -685,6 +849,39 @@ async function loadData() {
   }
 }
 
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+
+  const submittedValue = authInput.value.trim();
+  if (!submittedValue) {
+    setAuthMessage("Enter your registered email or mobile number.", true);
+    return;
+  }
+
+  const submitBtn = authForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  setAuthMessage("Checking member list...");
+
+  try {
+    if (!state.authorizedMembers.length) {
+      state.authorizedMembers = await fetchMembers();
+    }
+
+    if (!isAuthorizedMember(submittedValue, state.authorizedMembers)) {
+      setAuthMessage("We could not find that email or mobile number in the member list.", true);
+      return;
+    }
+
+    saveAuthSession();
+    authInput.value = "";
+    showPortal();
+  } catch (error) {
+    setAuthMessage(error.message, true);
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
 searchBox.addEventListener("input", applySearch);
 searchBox.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -733,6 +930,19 @@ homeSections.addEventListener("click", (event) => {
   }
 });
 
+authForm.addEventListener("submit", handleAuthSubmit);
+logoutBtn.addEventListener("click", () => {
+  clearAuthSession();
+  state.hasLoadedPortalData = false;
+  collapseAllAccordions();
+  showAuthScreen("You have been logged out.");
+});
+
 //openFacilitySection();
 
-loadData();
+if (hasValidAuthSession()) {
+  showPortal();
+} else {
+  clearAuthSession();
+  showAuthScreen();
+}

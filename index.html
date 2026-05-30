@@ -12,7 +12,32 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="container">
+  <main class="container auth-container" id="authScreen">
+    <section class="auth-panel" aria-labelledby="authTitle">
+      <img class="auth-logo" src="images/ga-logo.png" alt="Gami Asters logo" />
+      <div class="auth-copy">
+        <h1 id="authTitle">Gami Asters, C.H.S</h1>
+        <p>Facility Information Portal</p>
+      </div>
+      <form class="auth-form" id="authForm">
+        <label for="authInput">Email or mobile number</label>
+        <div class="auth-fields">
+          <input
+            id="authInput"
+            type="text"
+            inputmode="email"
+            autocomplete="username"
+            placeholder="Enter registered email or mobile"
+            required
+          />
+          <button type="submit">Continue</button>
+        </div>
+        <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <main class="container hidden" id="appShell">
     <header class="hero">
       <img id="ga-logo" class="ga-logo" src="images/ga-logo.png" alt="Gami Asters logo" />
       <div class="hero-text">
@@ -20,6 +45,7 @@
         <p>Facility Information Portal</p>
         <small id="updatedAt">Loading latest update...</small>
       </div>
+      <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
     </header>
 
     <section class="notice-banner" role="note" aria-label="Work in progress notice">
