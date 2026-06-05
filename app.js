@@ -278,17 +278,32 @@ function parseCSV(csvText) {
   return rows;
 }
 
+function normalizeWrappedCsvRows(rows) {
+  if (!rows.length) {
+    return rows;
+  }
+
+  const firstRow = rows[0];
+  const hasWrappedHeader = firstRow[0]?.includes(",");
+  const hasOnlyOneNonEmptyCell = firstRow
+    .slice(1)
+    .every((cell) => cell.trim() === "");
+
+  if (!hasWrappedHeader || !hasOnlyOneNonEmptyCell) {
+    return rows;
+  }
+
+  const rebuiltCsv = rows.map((row) => row[0] || "").join("\n");
+  return parseCSV(rebuiltCsv);
+}
+
 function mapRows(rows) {
   if (!rows.length) {
     throw new Error("No data found in sheet.");
   }
 
   // Some CSV exports wrap each whole row in a single quoted field.
-  // If detected, unwrap and parse once more.
-  if (rows[0].length === 1 && rows[0][0].includes(",")) {
-    const rebuiltCsv = rows.map((row) => row[0] || "").join("\n");
-    rows = parseCSV(rebuiltCsv);
-  }
+  rows = normalizeWrappedCsvRows(rows);
 
   if (!rows.length) {
     throw new Error("No data found in sheet.");
@@ -317,10 +332,7 @@ function mapRowsBySchema(rows, requiredColumns, filterKey) {
     throw new Error("No data found in sheet.");
   }
 
-  if (rows[0].length === 1 && rows[0][0].includes(",")) {
-    const rebuiltCsv = rows.map((row) => row[0] || "").join("\n");
-    rows = parseCSV(rebuiltCsv);
-  }
+  rows = normalizeWrappedCsvRows(rows);
 
   if (!rows.length) {
     throw new Error("No data found in sheet.");
