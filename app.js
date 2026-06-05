@@ -18,6 +18,7 @@ const OPS_CONTACT_REQUIRED_COLUMNS = [
   "escalation_contact"
 ];
 const NOTICE_REQUIRED_COLUMNS = ["notice_name", "pdf_url"];
+const BANNER_REQUIRED_COLUMNS = ["banner_title"];
 
 const state = {
   facilities: [],
@@ -25,7 +26,8 @@ const state = {
   managementCommitteeMembers: [],
   emergencyContacts: [],
   operationsContacts: [],
-  notices: []
+  notices: [],
+  banners: []
 };
 
 const statusEl = document.getElementById("status");
@@ -34,6 +36,7 @@ const managementCommitteeListEl = document.getElementById("managementCommitteeLi
 const emergencyContactsListEl = document.getElementById("emergencyContactsList");
 const operationsContactsListEl = document.getElementById("operationsContactsList");
 const noticesListEl = document.getElementById("noticesList");
+const noticeBannerTrackEl = document.getElementById("noticeBannerTrack");
 const template = document.getElementById("cardTemplate");
 const searchBox = document.getElementById("searchBox");
 const searchBtn = document.getElementById("searchBtn");
@@ -620,6 +623,33 @@ function renderFacilities(list) {
   setStatus(`Showing ${list.length} facility record(s).`);
 }
 
+function renderBanners(list) {
+  if (!noticeBannerTrackEl) {
+    return;
+  }
+
+  const noticeBannerEl = noticeBannerTrackEl.closest(".notice-banner");
+  noticeBannerTrackEl.innerHTML = "";
+
+  if (!list.length) {
+    noticeBannerEl?.classList.add("hidden");
+    return;
+  }
+
+  noticeBannerEl?.classList.remove("hidden");
+
+  const fragment = document.createDocumentFragment();
+
+  list.forEach((banner) => {
+    const span = document.createElement("span");
+    span.className = "notice-banner-text";
+    span.textContent = [banner.icon, banner.banner_title].filter(Boolean).join(" ");
+    fragment.appendChild(span);
+  });
+
+  noticeBannerTrackEl.appendChild(fragment);
+}
+
 function renderManagementCommittee(list) {
   managementCommitteeListEl.innerHTML = "";
   const fragment = document.createDocumentFragment();
@@ -925,6 +955,34 @@ async function fetchNotices() {
   return mapRowsBySchema(rows, NOTICE_REQUIRED_COLUMNS, "notice_name");
 }
 
+async function fetchBanners() {
+  const bannersCsvUrl = getDataSourceUrl("bannersCsvUrl");
+  if (!bannersCsvUrl) {
+    throw new Error("APP_CONFIG.dataSources.bannersCsvUrl is missing in config.js");
+  }
+
+  const response = await fetch(bannersCsvUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Unable to fetch banner data (${response.status})`);
+  }
+
+  const csv = await response.text();
+  const rows = parseCSV(csv);
+  return mapRowsBySchema(rows, BANNER_REQUIRED_COLUMNS, "banner_title");
+}
+
+async function loadBanners() {
+  try {
+    const banners = await fetchBanners();
+    state.banners = banners;
+    renderBanners(state.banners);
+  } catch (error) {
+    state.banners = [];
+    renderBanners([]);
+    console.error(error);
+  }
+}
+
 async function loadData() {
   setStatus("Loading data...");
   try {
@@ -997,6 +1055,7 @@ searchBtn.addEventListener("click", searchAndOpenMatch);
 refreshBtn.addEventListener("click", () => {
   searchBox.value = "";
   collapseAllAccordions();
+  loadBanners();
   loadData();
 });
 listEl.addEventListener("click", (event) => {
@@ -1053,6 +1112,7 @@ homeSections.addEventListener("click", (event) => {
   }
 });
 
-//openFacilitySection();
 
+renderBanners([]);
+loadBanners();
 loadData();
