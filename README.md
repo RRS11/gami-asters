@@ -2,17 +2,18 @@
 
 Self-hosted single-page site for society facility information.
 
-Current default setup is **local CSV mode** for easy testing, and it can be switched to **Google Sheet CSV** anytime.
+Current default setup is **Google Sheet CSV mode**. Local CSV mode is still supported by switching the commented `dataSources` block in `config.js`.
 
-## Quick Start (Local Testing)
+## Quick Start
 
-`config.js` is already configured to use:
+`config.js` is already configured to use published Google Sheet CSV URLs for:
 
-- `./data/facilities.csv`
-- `./data/management_committee.csv`
-- `./data/emergency_contacts.csv`
-- `./data/society_operations_contacts.csv` (operations contacts register)
-- `./data/notices.csv` (past notices register)
+- `facilitiesCsvUrl`
+- `managementCommitteeCsvUrl`
+- `emergencyContactsCsvUrl`
+- `operationsContactsCsvUrl`
+- `noticesCsvUrl`
+- `bannersCsvUrl`
 
 Run a local static server:
 
@@ -23,6 +24,8 @@ python3 -m http.server 8080
 Open:
 
 `http://localhost:8080`
+
+To use local CSV files instead, uncomment the local `dataSources` block in `config.js` and provide the matching files under `./data/`.
 
 ## Data File Format
 
@@ -72,6 +75,13 @@ Open:
 - `imp` (optional, highlight row when set to `true`/`yes`/`1`/`y`)
 - `badge`, `badge_type`, `icon` (optional)
 
+`data/banners.csv` includes:
+
+- `banner_title`
+- `icon` (optional)
+
+Each banner row is rendered as one marquee item in the top notice banner. If the file contains only a valid header such as `banner_title,icon` and no data rows, the banner area is hidden. Banner data loads independently from the main page sections, so banner fetch errors do not block facilities, contacts, operations, or notices.
+
 Optional badge columns can be used in any CSV-backed section that supports them:
 
 - `badge`: visible badge text, for example `New`, `Important`, or `Emergency`
@@ -80,17 +90,17 @@ Optional badge columns can be used in any CSV-backed section that supports them:
 
 When `imp` is true and no custom badge is provided, the UI shows a default `Important` badge.
 
-## Switch to Google Sheet Backend
+## Update Google Sheet Backend
 
-1. Create one Google Sheet tab (example: `Facilities`) with the same columns listed above.
+1. Create one Google Sheet tab per CSV-backed section, or one sheet with separate tabs, using the columns listed above.
 2. In Google Sheets, go to **File -> Share -> Publish to web**.
-3. Publish the `Facilities` tab as **Comma-separated values (.csv)**.
+3. Publish each tab as **Comma-separated values (.csv)**.
 4. Copy the generated URL, usually:
 `https://docs.google.com/spreadsheets/d/<SHEET_ID>/export?format=csv&gid=<TAB_GID>`
     e.g. https://docs.google.com/spreadsheets/d/e/2PACX-1vTjeTE3zAWr4XQZmqH0ZsKj0jug2gUqGhD1puOtvNKE033piPOfRfxCl8UNhNLESx7lKiD3kBObDTQ9/pub?output=csv
 
-5. Update `dataSources.facilitiesCsvUrl` in `config.js` with that URL.
-6. Keep `managementCommitteeCsvUrl`, `emergencyContactsCsvUrl`, and `operationsContactsCsvUrl` pointing to local files, or replace them with your hosted CSV URLs.
+5. Update the matching key in `config.js`: `facilitiesCsvUrl`, `managementCommitteeCsvUrl`, `emergencyContactsCsvUrl`, `operationsContactsCsvUrl`, `noticesCsvUrl`, or `bannersCsvUrl`.
+6. Repeat for every section you want to load from Google Sheets.
 
 ## Deploy / Self-Host
 
@@ -100,14 +110,11 @@ Upload these files to your web server or static hosting:
 - `styles.css`
 - `app.js`
 - `config.js`
-- `data/facilities.csv` (local mode)
-- `data/management_committee.csv` (local mode)
-- `data/emergency_contacts.csv` (local mode)
-- `data/society_operations_contacts.csv` (local mode)
-- `data/notices.csv` (local mode)
+- `data/*.csv` only if using local CSV mode
 
 ## Features
 
+- Marquee notice banner loaded from `bannersCsvUrl`.
 - Facility cards with timings, rules, booking process, instructor, coordinator, contact, and notes.
 - Management committee section loaded from CSV.
 - Emergency contacts section loaded from CSV.
@@ -121,4 +128,6 @@ Upload these files to your web server or static hosting:
 
 - Column names are case-insensitive, spaces are normalized.
 - Required columns must be present.
+- Some CSV exports that wrap an entire row in one quoted field are normalized automatically.
+- Marquee speed is controlled in `styles.css` by the duration in `animation: marquee 30s linear infinite;`.
 - For private sheet access (not public CSV), use Google Apps Script or authenticated API flow.
