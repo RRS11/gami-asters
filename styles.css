@@ -502,6 +502,91 @@ body > * {
   text-decoration: underline;
 }
 
+.festival-list {
+  display: grid;
+  gap: 10px;
+}
+
+.festival-card {
+  overflow: hidden;
+}
+
+.festival-toggle {
+  color: inherit;
+  text-decoration: none;
+}
+
+.festival-title {
+  margin: 0;
+  color: var(--logo-purple-2);
+  font-size: 1rem;
+}
+
+.festival-chevron {
+  color: var(--accent);
+  font-size: 1.7rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.event-page {
+  max-width: 850px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover,
+.back-link:focus {
+  text-decoration: underline;
+}
+
+.event-detail-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 4px 10px rgba(15, 55, 73, 0.06);
+}
+
+.event-detail-card h1 {
+  margin: 0;
+  color: var(--logo-purple-2);
+  font-size: 1.65rem;
+}
+
+.event-detail-card > p {
+  line-height: 1.55;
+}
+
+.event-document {
+  display: block;
+  width: 100%;
+  height: min(72vh, 760px);
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.event-document-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.event-document-link:hover,
+.event-document-link:focus {
+  text-decoration: underline;
+}
+
 .empty-state {
   margin: 0;
   color: var(--muted);
@@ -531,6 +616,10 @@ body > * {
 @media (max-width: 640px) {
   .container {
     padding: 14px;
+  }
+
+  .event-detail-card {
+    padding: 18px;
   }
 
   .hero {

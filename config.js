@@ -6,7 +6,9 @@ window.APP_CONFIG = {
     emergencyContactsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVmWxyF3Lf5T5qHXCg3ZwTmWPAAyxXip4RfYpy6uHw4StAJqi95NTy3tBKWCA6wLtkF24y6PClyvtm/pub?gid=1897172125&single=true&output=csv",
     operationsContactsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTjXNLdF_XXzrZEB5XKZJJz33tCfEM0MDQI-yieuR78jugbCKr619-JJP-TlBeR9cu8zMqjiWa_mSsr/pub?gid=2143892056&single=true&output=csv",
     noticesCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQWs1npI9ZDal3mEcLhm3-UvQ9611KCJL1_yazgbdJ1vCr_lp4Mm3N4DhuXCqRmHon397rWcBVbtJy0/pub?gid=690846639&single=true&output=csv",
-    bannersCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSznL65PqsmSoRiNmpcknR2Bza1tM--8epG8Sg33H08skQqlfxZ6zL6H12eHtver5tQG2xqEVzpzQt/pub?gid=2074096875&single=true&output=csv"
+    bannersCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSznL65PqsmSoRiNmpcknR2Bza1tM--8epG8Sg33H08skQqlfxZ6zL6H12eHtver5tQG2xqEVzpzQt/pub?gid=2074096875&single=true&output=csv",
+    // Published Google Sheet CSV source for Festivals / Events.
+    festivalsCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQke8TMHrs-7qPjRG_YI7XkWsei7UT5UoZyv7DLqQu82GSbpQbT_9PpTU9meAeSyYY3_V0TDlG3hap0/pub?gid=690846639&single=true&output=csv"
   }
   
   // Local CSV mode: each home card reads from its own CSV file.
@@ -16,6 +18,7 @@ window.APP_CONFIG = {
   //   emergencyContactsCsvUrl: "./data/emergency_contacts.csv",
   //   operationsContactsCsvUrl: "./data/society_operations_contacts.csv",
   //   noticesCsvUrl: "./data/notices.csv",
-  //   bannersCsvUrl: "./data/banners.csv"
+  //   bannersCsvUrl: "./data/banners.csv",
+  //   festivalsCsvUrl: "./data/festivals.csv"
   // }
 };
