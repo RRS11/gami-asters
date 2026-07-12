@@ -5,6 +5,7 @@ window.APP_CONFIG = {
     managementCommitteeCsvUrl: "./data/management_committee.csv",
     emergencyContactsCsvUrl: "./data/emergency_contacts.csv",
     operationsContactsCsvUrl: "./data/society_operations_contacts.csv",
-    noticesCsvUrl: "./data/notices.csv"
+    noticesCsvUrl: "./data/notices.csv",
+    festivalsCsvUrl: "./data/festivals.csv"
   }
 };

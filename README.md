@@ -14,6 +14,7 @@ Current default setup is **Google Sheet CSV mode**. Local CSV mode is still supp
 - `operationsContactsCsvUrl`
 - `noticesCsvUrl`
 - `bannersCsvUrl`
+- `festivalsCsvUrl`
 
 Run a local static server:
 
@@ -40,6 +41,16 @@ To use local CSV files instead, uncomment the local `dataSources` block in `conf
 - `contact` (optional)
 - `notes` (optional)
 - `badge`, `badge_type`, `icon` (optional)
+
+`data/festivals.csv` includes:
+
+- `event_name`
+- `doc_url` (published Google Doc URL for the event page)
+- `issued_date` (optional)
+- `effective_date` (optional)
+- `badge`, `badge_type`, `icon` (optional)
+
+Every festival must have its own matching folder under `events/`, containing `index.html`, such as `events/ganapati-2026/index.html`. The folder name and `data-event-slug` are derived from `event_name` (for example, `Ganapati 2026` becomes `ganapati-2026`). This creates an independently accessible URL such as `/events/ganapati-2026/` without server rewrite rules.
 
 `data/management_committee.csv` must include:
 
@@ -99,7 +110,7 @@ When `imp` is true and no custom badge is provided, the UI shows a default `Impo
 `https://docs.google.com/spreadsheets/d/<SHEET_ID>/export?format=csv&gid=<TAB_GID>`
     e.g. https://docs.google.com/spreadsheets/d/e/2PACX-1vTjeTE3zAWr4XQZmqH0ZsKj0jug2gUqGhD1puOtvNKE033piPOfRfxCl8UNhNLESx7lKiD3kBObDTQ9/pub?output=csv
 
-5. Update the matching key in `config.js`: `facilitiesCsvUrl`, `managementCommitteeCsvUrl`, `emergencyContactsCsvUrl`, `operationsContactsCsvUrl`, `noticesCsvUrl`, or `bannersCsvUrl`.
+5. Update the matching key in `config.js`: `facilitiesCsvUrl`, `managementCommitteeCsvUrl`, `emergencyContactsCsvUrl`, `operationsContactsCsvUrl`, `noticesCsvUrl`, `bannersCsvUrl`, or `festivalsCsvUrl`.
 6. Repeat for every section you want to load from Google Sheets.
 
 ## Deploy / Self-Host
@@ -110,6 +121,8 @@ Upload these files to your web server or static hosting:
 - `styles.css`
 - `app.js`
 - `config.js`
+- `event.js`
+- `events/ganapati-2026/index.html`, `events/independence-day-2026/index.html`, and one folder per additional event
 - `data/*.csv` only if using local CSV mode
 
 ## Features
@@ -120,6 +133,7 @@ Upload these files to your web server or static hosting:
 - Emergency contacts section loaded from CSV.
 - Society operations contacts section loaded from CSV.
 - Past notices section loaded from CSV with in-page PDF preview, newest row shown first.
+- Festivals / Events section loaded independently from `festivalsCsvUrl`, with dedicated static detail pages.
 - Reusable header icons and CSV-driven badges for important, danger, new, info, and success labels.
 - Search filter across all key fields.
 - Manual refresh button to reload latest data.

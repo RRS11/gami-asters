@@ -19,6 +19,7 @@ const OPS_CONTACT_REQUIRED_COLUMNS = [
 ];
 const NOTICE_REQUIRED_COLUMNS = ["notice_name", "pdf_url"];
 const BANNER_REQUIRED_COLUMNS = ["banner_title"];
+const FESTIVAL_REQUIRED_COLUMNS = ["event_name", "doc_url"];
 
 const state = {
   facilities: [],
@@ -27,7 +28,8 @@ const state = {
   emergencyContacts: [],
   operationsContacts: [],
   notices: [],
-  banners: []
+  banners: [],
+  festivals: []
 };
 
 const statusEl = document.getElementById("status");
@@ -36,6 +38,7 @@ const managementCommitteeListEl = document.getElementById("managementCommitteeLi
 const emergencyContactsListEl = document.getElementById("emergencyContactsList");
 const operationsContactsListEl = document.getElementById("operationsContactsList");
 const noticesListEl = document.getElementById("noticesList");
+const festivalsListEl = document.getElementById("festivalsList");
 const noticeBannerTrackEl = document.getElementById("noticeBannerTrack");
 const template = document.getElementById("cardTemplate");
 const searchBox = document.getElementById("searchBox");
@@ -45,6 +48,9 @@ const updatedAt = document.getElementById("updatedAt");
 const homeSections = document.getElementById("homeSections");
 const facilityHomeCard = document
   .querySelector('[aria-controls="home-body-facility"]')
+  ?.closest(".home-card");
+const festivalsHomeCard = document
+  .querySelector('[aria-controls="home-body-festivals"]')
   ?.closest(".home-card");
 const PHONE_PATTERN = /(?:\+91[\s-]?\d{5}\s?\d{5}|\b[6-9]\d{9}\b)/g;
 
@@ -136,6 +142,16 @@ function openFacilitySection() {
     closeHomeCard(card);
   });
   openHomeCard(facilityHomeCard);
+}
+
+function openFestivalsSection() {
+  if (!festivalsHomeCard) {
+    return;
+  }
+  homeSections.querySelectorAll(".home-card.open").forEach((card) => {
+    closeHomeCard(card);
+  });
+  openHomeCard(festivalsHomeCard);
 }
 
 function collapseAllAccordions() {
@@ -858,6 +874,82 @@ function renderNotices(list) {
   noticesListEl.appendChild(fragment);
 }
 
+function getFestivalSlug(eventName) {
+  return String(eventName || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getFestivalUrl(eventName) {
+  return `./events/${encodeURIComponent(getFestivalSlug(eventName))}/`;
+}
+
+function renderFestivals(list, errorMessage = "") {
+  if (!festivalsListEl) {
+    return;
+  }
+
+  festivalsListEl.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+
+  if (errorMessage) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = errorMessage;
+    fragment.appendChild(empty);
+  } else if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "No festival or event information is available yet.";
+    fragment.appendChild(empty);
+  } else {
+    list.forEach((festival) => {
+      const card = document.createElement("article");
+      card.className = "notice-card festival-card";
+
+      const link = document.createElement("a");
+      link.className = "notice-toggle festival-toggle";
+      link.href = getFestivalUrl(festival.event_name);
+
+      const header = document.createElement("div");
+      header.className = "notice-header";
+
+      const title = document.createElement("h3");
+      title.className = "festival-title";
+      title.textContent = festival.event_name;
+      appendBadge(title, festival);
+
+      const details = document.createElement("p");
+      details.className = "notice-meta";
+      const metaItems = [];
+      if (festival.issued_date) {
+        metaItems.push(`Issued: ${festival.issued_date}`);
+      }
+      if (festival.effective_date) {
+        metaItems.push(`Effective: ${festival.effective_date}`);
+      }
+      details.textContent = metaItems.join(" | ");
+
+      header.appendChild(title);
+      if (details.textContent) {
+        header.appendChild(details);
+      }
+      const chevron = document.createElement("span");
+      chevron.className = "chevron festival-chevron";
+      chevron.setAttribute("aria-hidden", "true");
+      chevron.textContent = "›";
+
+      link.append(header, chevron);
+      card.appendChild(link);
+      fragment.appendChild(card);
+    });
+  }
+
+  festivalsListEl.appendChild(fragment);
+}
+
 function applySearch() {
   const query = searchBox.value.trim().toLowerCase();
   if (query.length > 0 && query.length < 3) {
@@ -971,6 +1063,23 @@ async function fetchBanners() {
   return mapRowsBySchema(rows, BANNER_REQUIRED_COLUMNS, "banner_title");
 }
 
+async function fetchFestivals() {
+  const festivalsCsvUrl = getDataSourceUrl("festivalsCsvUrl");
+  if (!festivalsCsvUrl) {
+    throw new Error("Festival data source has not been configured yet.");
+  }
+
+  const response = await fetch(festivalsCsvUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Unable to fetch festival data (${response.status})`);
+  }
+
+  const csv = await response.text();
+  const rows = parseCSV(csv);
+  return mapRowsBySchema(rows, FESTIVAL_REQUIRED_COLUMNS, "event_name")
+    .filter((festival) => festival.doc_url && getFestivalSlug(festival.event_name));
+}
+
 async function loadBanners() {
   try {
     const banners = await fetchBanners();
@@ -979,6 +1088,17 @@ async function loadBanners() {
   } catch (error) {
     state.banners = [];
     renderBanners([]);
+    console.error(error);
+  }
+}
+
+async function loadFestivals() {
+  try {
+    state.festivals = await fetchFestivals();
+    renderFestivals(state.festivals);
+  } catch (error) {
+    state.festivals = [];
+    renderFestivals([], "Festival information is not available yet.");
     console.error(error);
   }
 }
@@ -1056,6 +1176,7 @@ refreshBtn.addEventListener("click", () => {
   searchBox.value = "";
   collapseAllAccordions();
   loadBanners();
+  loadFestivals();
   loadData();
 });
 listEl.addEventListener("click", (event) => {
@@ -1112,7 +1233,12 @@ homeSections.addEventListener("click", (event) => {
   }
 });
 
+if (window.location.hash === "#festivals") {
+  openFestivalsSection();
+}
 
 renderBanners([]);
+renderFestivals([]);
 loadBanners();
+loadFestivals();
 loadData();
