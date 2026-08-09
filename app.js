@@ -462,7 +462,7 @@ function maskIndianMobile(value) {
 }
 
 function hasUnmaskedMobileContext(...values) {
-  return values.some((value) => /aniket|society manager/i.test(String(value || "")));
+  return values.some((value) => /aniket|society manager|Machindra Chaudhary|Mohite|Sawant|Ajit|Neelam| /i.test(String(value || "")));
 }
 
 function normalizeBadgeType(value) {
